@@ -1,0 +1,86 @@
+# =============================================================================
+# СПИСОК ПАКЕТОВ, КОТОРЫЕ НЕЛЬЗЯ ТРОГАТЬ (справочно, не используется кодом)
+# =============================================================================
+# Этот файл — только документация. Скрипты его не читают.
+# Он нужен, чтобы при редактировании debloat.txt было видно,
+# какие пакеты категорически оставить в покое: отключение любого
+# из них приведёт как минимум к бутлупу, как максимум к «кирпичу»
+# (ТВ будет запускаться, но не доходить до рабочего стола).
+#
+# Если тебе хочется «ещё что-нибудь выключить» — свери имя
+# пакета с этим списком; если он здесь, НЕ ТРОГАЙ.
+# =============================================================================
+
+
+# ---- Ядро Android ---------------------------------------------------------
+com.android.settings
+com.android.systemui
+com.android.providers.settings
+com.android.providers.media
+com.android.providers.contacts
+com.android.providers.calendar
+com.android.providers.downloads
+com.android.providers.telephony
+com.android.providers.userdictionary
+com.android.inputdevices
+com.android.keychain
+com.android.location.fused
+com.android.packageinstaller
+com.android.server.telecom
+com.android.shell
+
+
+# ---- Google Services ------------------------------------------------------
+# Без этих пакетов перестанут работать Google Play, YouTube, аккаунт Google
+# и большинство нормальных приложений.
+com.google.android.gms
+com.google.android.gsf
+com.google.android.webview
+com.google.android.ext.services
+com.google.android.ext.shared
+com.google.android.feedback
+com.google.android.backuptransport
+com.google.android.partnersetup
+com.google.android.setupwizard
+com.google.android.syncadapters.contacts
+com.google.android.tts
+
+
+# ---- Android TV ----------------------------------------------------------
+# ⚠️  com.google.android.tvlauncher — это стандартный Android TV launcher.
+# Он нужен как «страховочный» home-screen. Если отключить его И PatchWall,
+# а FLauncher ещё не установлен — ТВ зависнет без домашнего экрана.
+com.google.android.tvlauncher
+com.google.android.tv
+com.google.android.tv.remote
+com.google.android.tv.remote.service
+com.google.android.katniss
+com.google.android.leanbacklauncher
+com.google.android.marvin.talkback
+
+
+# ---- Клавиатура и ввод ---------------------------------------------------
+com.google.android.inputmethod.latin
+com.android.inputmethod.latin
+
+
+# ---- Mi TV — обязательные ------------------------------------------------
+# Эти пакеты Xiaomi, в отличие от PatchWall/мусора, участвуют в работе
+# базовой системы ТВ. Их отключение ломает первую настройку, Wi-Fi,
+# пульт по Bluetooth или комбинации горячих клавиш.
+com.xiaomi.mitv.systemui
+com.xiaomi.mitv.networksetting
+com.xiaomi.mitv.remotecontroller
+com.xiaomi.mitv.bluetoothservice
+com.xiaomi.mitv.hotkey
+com.xiaomi.mitv.btspeakerservice
+com.xiaomi.mitv.cambricon
+com.xiaomi.mitv.bootvideo
+com.xiaomi.mitv.epg
+com.xiaomi.mitv.setupwizard
+
+
+# ---- Прочее Google -------------------------------------------------------
+# Если выключишь — пропадёт AirPlay/Chromecast-функционал.
+com.google.android.apps.mediashell
+com.google.android.youtube.tv
