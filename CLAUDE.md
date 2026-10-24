@@ -57,6 +57,11 @@
 3. **Защита лаунчера.** `02-debloat.sh` обязан отказываться отключать
    `com.mitv.tvhome`, пока на ТВ не найден fallback-home (FLauncher,
    `com.google.android.tvlauncher` или `com.google.android.leanbacklauncher`).
+   С 2026-10-24 проверка шире: список домашних экранов скрипт берёт у ТВ
+   (`cmd package query-activities … category.HOME`) и не отключает ни один
+   пакет из этого списка, а также `com.mitv.tvhome` / `com.mitv.tvhome.atv`,
+   если после этого не останется другого дома. Причина: на живом 4S домом
+   оказался Google tvlauncher, а PatchWall назывался `com.mitv.tvhome.atv`.
    Эта проверка — главный предохранитель проекта, её не упрощать.
 4. **DRY_RUN.** Любой скрипт, который что-то *меняет* на ТВ, поддерживает
    `DRY_RUN=1`: печатает команды и ничего не выполняет. Новый изменяющий
