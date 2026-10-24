@@ -54,7 +54,12 @@
    `adb_cmd` из `lib/common.sh` — они подставляют `-s "$TV_HOST:$TV_PORT"`.
    Голый `adb shell` ломается, когда к ноуту подключён ещё и телефон
    («more than one device»).
-3. **Защита лаунчера.** `02-debloat.sh` обязан отказываться отключать
+3. **Стоп-лист.** `02-debloat.sh` до подключения к ТВ сверяет весь
+   `debloat.txt` с `keep.txt` и встроенной `is_core_pkg` (ядро Android из
+   CleanYourTV #884, `setupwraith`, `com.android.providers.*`). Совпадение —
+   выход без единого отключения, переменной не обходится. Не ослаблять и не
+   добавлять «FORCE»-обход.
+3а. **Защита лаунчера.** `02-debloat.sh` обязан отказываться отключать
    `com.mitv.tvhome`, пока на ТВ не найден fallback-home (FLauncher,
    `com.google.android.tvlauncher` или `com.google.android.leanbacklauncher`).
    С 2026-10-24 проверка шире: список домашних экранов скрипт берёт у ТВ
@@ -83,7 +88,7 @@ scripts/03-flauncher.sh — поиск/скачивание APK, установ�
 scripts/99-restore.sh   — pm enable всего отключённого; REMOVE_FLAUNCHER=1
 packages/debloat.txt    — что отключаем; группы от безопасных к рискованным,
                           каждая строка с комментарием «что это и чем грозит»
-packages/keep.txt       — справочный стоп-лист, кодом не читается
+packages/keep.txt       — стоп-лист; 02 читает его и при совпадении не делает ничего
 ```
 
 Порядок запуска у пользователя: `00 → 01 → DRY_RUN=1 02 → 02 → 03`, и только
