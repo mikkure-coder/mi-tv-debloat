@@ -48,10 +48,14 @@ com.google.android.tts
 
 
 # ---- Android TV ----------------------------------------------------------
-# ⚠️  com.google.android.tvlauncher — это стандартный Android TV launcher.
-# Он нужен как «страховочный» home-screen. Если отключить его И PatchWall,
-# а FLauncher ещё не установлен — ТВ зависнет без домашнего экрана.
-com.google.android.tvlauncher
+# com.google.android.tvlauncher (Google-лаунчер) УБРАН из стоп-листа
+# 2026-10-25 решением владельца: на Mi TV 4S у него HOME-приоритет 2, у
+# стороннего лаунчера — 0, и Android всегда выбирает Google, пока тот включён
+# (set-home-activity отвечает Success и ничего не меняет). Отключать его можно
+# ТОЛЬКО через 02 и только когда новый лаунчер установлен и проверен ручным
+# запуском: предохранитель 02 не даст отключить последний дом, а на ТВ есть
+# аварийный FallbackHome. Откат — 99-restore.sh.
+#com.google.android.tvlauncher
 com.google.android.tv
 com.google.android.tv.remote
 com.google.android.tv.remote.service
