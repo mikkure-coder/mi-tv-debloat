@@ -84,3 +84,29 @@ com.xiaomi.mitv.setupwizard
 # Если выключишь — пропадёт AirPlay/Chromecast-функционал.
 com.google.android.apps.mediashell
 com.google.android.youtube.tv
+
+
+# ---- Найдено на живом Mi TV 4S (MiTV-MSSP1, Android 9), 2026-10-24 --------
+# Разделы выше собраны по внешним источникам; 18 имён из них на этом ТВ
+# вообще нет (например, com.android.settings и все com.xiaomi.mitv.*).
+# Ниже — пакеты, которые реально стоят на ТВ и отвечают за базовую работу.
+# Назначение определено по имени и роли в Android, не по эксперименту:
+# проверять, «что будет, если выключить», на них НЕ нужно.
+android                                   # сама система Android
+com.android.tv.settings                   # Настройки ТВ + аварийный домашний экран (FallbackHome)
+com.android.providers.tv                  # база каналов и входов ТВ
+com.android.vending                       # Google Play
+com.google.android.packageinstaller       # установка приложений
+com.google.android.tv.frameworkpackagestubs  # заглушки системных функций Android TV
+com.android.bluetooth                     # Bluetooth — через него работает пульт
+com.android.externalstorage               # доступ к флешкам
+com.android.defcontainer                  # служебный пакет установки приложений
+com.android.se                            # защищённый элемент, системный
+com.mediatek.tvinput                      # входы ТВ: HDMI/антенна (чип MediaTek)
+com.mediatek.tvinputservice.arbitratorservice  # распределение входов ТВ
+com.mediatek.wwtv.tvcenter                # приложение «ТВ»: HDMI/эфир
+com.mediatek.network                      # сеть на уровне чипа MediaTek
+com.mediatek.tv.agent                     # служба чипа MediaTek
+com.mediatek.hotkey.dispatcher            # обработка кнопок пульта
+mitv.service                              # системная служба Xiaomi
+com.xiaomi.mitv.res                       # ресурсы оболочки Xiaomi
