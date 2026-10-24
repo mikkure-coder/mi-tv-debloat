@@ -77,8 +77,8 @@ com.xiaomi.statistic              # статистика Xiaomi — отключ
 # с флешки через MX Player — эти не нужны; если через встроенное — оставь.
 
 #com.mitv.videoplayer             # встроенный видеоплеер — не проверено
-#com.mitv.gallery                 # галерея — не проверено
-#com.xiaomi.mimusic2              # музыка Xiaomi — не проверено
+com.mitv.gallery                  # галерея — по выбору владельца 2026-10-24: не пользуется (последнее открытие давно)
+com.xiaomi.mimusic2               # музыка Xiaomi — по выбору владельца 2026-10-24: ни разу не открывалась
 #com.xiaomi.mitv.mediaexplorer    # просмотр файлов на флешке — не проверено
 
 
