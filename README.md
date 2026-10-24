@@ -61,13 +61,37 @@ DRY_RUN=1 ./scripts/04-background.sh
 DRY_RUN=1 ./scripts/05-components.sh
 ./scripts/05-components.sh
 
-# 3. Установка FLauncher и назначение его домашним экраном
+# 3. Установка лаунчера (APK из apks/, см. ниже) и назначение домашним экраном
+DRY_RUN=1 ./scripts/03-flauncher.sh
 ./scripts/03-flauncher.sh
 ```
 
-После шага 3: нажми Home на пульте ТВ, выбери FLauncher, пункт
-«Всегда» / «Запомнить выбор». Штатный лаунчер
-(`com.google.android.tvlauncher`) не отключай — пусть остаётся запасным.
+После шага 3: нажми Home на пульте ТВ. Если появится выбор — выбери новый
+лаунчер и «Всегда». Штатный лаунчер (`com.google.android.tvlauncher`) не
+отключай — пусть остаётся запасным.
+
+### Лаунчер в стиле Apple TV (CleanYourTV): сборка из исходников
+
+Готового APK у проекта нет, собираем на ноутбуке. Проверено 2026-10-25 на
+Ubuntu 24.04, коммит `204143007f0b`, сборка ~1 минута.
+
+```bash
+# Один раз: Java 17 и Android SDK
+sudo apt install -y openjdk-17-jdk-headless unzip
+# Инструменты Android с dl.google.com распаковать в ~/Android/Sdk/cmdline-tools/latest, затем:
+~/Android/Sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/Android/Sdk --licenses
+~/Android/Sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/Android/Sdk \
+    --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+
+# Сборка с конкретного просмотренного коммита
+git clone https://github.com/Gathin23/cleanyourtv.git && cd cleanyourtv
+git checkout 204143007f0bebfb14d6ef001a32e5836b1c90b5
+cd launcher && ANDROID_HOME=$HOME/Android/Sdk ./gradlew --no-daemon assembleRelease
+cp app/build/outputs/apk/release/app-release.apk <путь к mi-tv-debloat>/apks/
+```
+
+Их `build-and-install.sh` **не запускать**: он отключает Google-лаунчер и
+выдаёт лаунчеру лишние права. Ставим нашим `03`. Подробности — CLAUDE.md, раздел 2.
 
 ## Откат
 
