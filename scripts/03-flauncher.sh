@@ -19,6 +19,11 @@
 #
 # Запуск:
 #   ./scripts/03-flauncher.sh
+#   DRY_RUN=1 ./scripts/03-flauncher.sh   # ничего не качает и не меняет на ТВ,
+#                                         # только печатает, что сделал бы.
+#
+# Откат: ./scripts/99-restore.sh (домашний экран из бэкапа) и
+#        REMOVE_FLAUNCHER=1 ./scripts/99-restore.sh (удалить FLauncher).
 # =============================================================================
 
 source "$(dirname "$0")/lib/common.sh"
@@ -31,6 +36,12 @@ if [[ -z "$TV_HOST" && -f "$ROOT_DIR/.tv-host" ]]; then
 fi
 
 ensure_adb_connected
+
+# Режим «сухой прогон»: показать команды, но ничего не выполнять.
+DRY_RUN="${DRY_RUN:-0}"
+if [[ "$DRY_RUN" == "1" ]]; then
+    warn "DRY_RUN=1 — только печатаю команды, НИЧЕГО не качаю и не меняю на ТВ."
+fi
 
 # Каталог, куда скрипт складывает скачанный APK. Входит в .gitignore —
 # в репозитории файлов *.apk быть не должно.
@@ -54,6 +65,14 @@ elif ls "$ROOT_DIR"/*.apk >/dev/null 2>&1; then
 fi
 
 # --- Шаг 2. Если APK не нашли — пробуем качнуть ------------------------------
+if [[ -z "$APK" && "$DRY_RUN" == "1" ]]; then
+    log "DRY: локального APK нет — скачал бы последний FLauncher с f-droid.org"
+    log "DRY: adb install -r <скачанный APK>"
+    log "DRY: cmd package set-home-activity <компонент FLauncher>"
+    log "DRY: input keyevent KEYCODE_HOME и проверка, что открылся FLauncher"
+    exit 0
+fi
+
 if [[ -z "$APK" ]]; then
     log "Локального APK нет, пробую скачать из F-Droid..."
 
@@ -102,6 +121,13 @@ fi
 # --- Шаг 4. Устанавливаем APK на ТВ ------------------------------------------
 # Запомним список пакетов ДО установки — чтобы потом точно знать, что добавилось.
 BEFORE="$(adb_shell pm list packages | tr -d '\r' | sort)"
+
+if [[ "$DRY_RUN" == "1" ]]; then
+    log "DRY: adb install -r $APK"
+    log "DRY: cmd package set-home-activity <компонент из установленного APK>"
+    log "DRY: input keyevent KEYCODE_HOME и проверка, что открылся FLauncher"
+    exit 0
+fi
 
 log "Устанавливаю $APK на ТВ..."
 # adb install -r : переустановить, сохранив данные, если пакет уже стоит.
