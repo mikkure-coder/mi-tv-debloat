@@ -51,6 +51,11 @@ DRY_RUN=1 ./scripts/02-debloat.sh
 # Потом боевой запуск:
 ./scripts/02-debloat.sh
 
+# 2½. Запрет работы в фоне без отключения (иконка остаётся) —
+#      по списку packages/background.txt
+DRY_RUN=1 ./scripts/04-background.sh
+./scripts/04-background.sh
+
 # 3. Установка FLauncher и назначение его домашним экраном
 ./scripts/03-flauncher.sh
 ```

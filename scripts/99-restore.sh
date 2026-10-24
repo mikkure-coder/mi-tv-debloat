@@ -8,6 +8,8 @@
 #      до любого вмешательства). Всё, что отключено сейчас, но не было
 #      отключено тогда, включает обратно: `pm enable <пакет>`.
 #      Неважно, есть ли пакет в debloat.txt и закомментирован ли он там.
+#   1½. Снимает запрет работы в фоне, поставленный 04-background.sh:
+#      возвращает настройки из backup/appops-before.txt.
 #   2. (Опционально, после подтверждения) удаляет FLauncher с ТВ.
 #   3. Возвращает домашний экран, записанный в бэкапе (home-activity.txt).
 #
@@ -101,6 +103,31 @@ done <<< "$TO_ENABLE"
 log "---"
 log "Включено:   $cnt_enabled"
 log "Ошибок:     $cnt_errors"
+
+# --- Шаг 1½. Снимаем запрет работы в фоне (то, что делал 04) ---------------
+# 04-background.sh перед изменением записал исходную настройку каждого
+# пакета в backup/appops-before.txt («<пакет> <режим>», режим обычно
+# default). Возвращаем ровно её — даже если пакет уже убран из
+# background.txt.
+APPOPS_BEFORE="$BACKUP_DIR/appops-before.txt"
+if [[ -f "$APPOPS_BEFORE" ]]; then
+    log "---"
+    log "Возвращаю настройки работы в фоне из $APPOPS_BEFORE"
+    while read -r pkg mode; do
+        [[ -z "$pkg" ]] && continue
+        if ! echo "$INSTALLED" | grep -qxF "$pkg"; then
+            log "SKIP: $pkg — не установлен"
+            continue
+        fi
+        if [[ "$DRY_RUN" == "1" ]]; then
+            log "DRY: cmd appops set $pkg RUN_ANY_IN_BACKGROUND $mode"
+        elif out="$(adb_shell cmd appops set "$pkg" RUN_ANY_IN_BACKGROUND "$mode" 2>&1)"; then
+            log "BG-ON: $pkg → $mode"
+        else
+            err "FAIL: $pkg — $out"
+        fi
+    done < "$APPOPS_BEFORE"
+fi
 
 # --- Шаг 2. Опционально: удаление FLauncher --------------------------------
 # По умолчанию FLauncher остаётся на ТВ — чтобы не терять его данные.
