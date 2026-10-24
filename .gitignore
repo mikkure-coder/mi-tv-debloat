@@ -8,3 +8,5 @@ backup/
 *.swp
 *.bak
 .DS_Store
+# Локальный файл с IP телевизора, его пишет 00-prepare.sh — в репо нельзя
+.tv-host
