@@ -38,7 +38,17 @@
 - коммит в git IP телевизора, его MAC, логов запусков, бэкапов и `*.apk`
   (см. `.gitignore`; файл `.tv-host` локальный и в репозиторий не попадает);
 - скачивание APK откуда-либо, кроме F-Droid / официальных исходников проекта.
-  FLauncher: `me.efesser.flauncher`, https://gitlab.com/flauncher/flauncher
+  Разрешены два лаунчера:
+  - FLauncher: `me.efesser.flauncher`, https://gitlab.com/flauncher/flauncher
+    (готовый APK из F-Droid);
+  - лаунчер CleanYourTV: `com.gathin.tvhome`, https://github.com/Gathin23/cleanyourtv
+    (MIT), **только сборка из исходников** на ноутбуке, с конкретного
+    просмотренного коммита (решение владельца 2026-10-25; код просмотрен на
+    `204143007f0b`: нет разрешения INTERNET). Их `build-and-install.sh` и
+    `tools/disable.sh` не запускать: установщик отключает Google-лаунчер и
+    выдаёт `WRITE_SECURE_SETTINGS`. Службу специальных возможностей
+    `HomeKeyService` не включать без отдельного решения — она нужна, только
+    если кнопка Home шлёт `KEYCODE_ALL_APPS`. Ставить нашим `03`.
 
 Любая операция, добавляемая в проект, должна иметь ответ на вопрос
 **«как это откатить»**. Если ответа нет — операция в проект не входит.
