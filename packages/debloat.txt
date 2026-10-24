@@ -32,14 +32,25 @@ com.miui.tv.analytics             # аналитика MIUI TV — не пров
 com.xiaomi.statistic              # статистика Xiaomi — не проверено
 
 
-# ---- КАНДИДАТЫ: Xiaomi-мусор (закомментировано до решения) -----------------
-# Назначение определено только по имени пакета.
+# ---- ВТОРАЯ ПОРЦИЯ: контент и баннеры Xiaomi (включено 2026-10-24) ---------
+# «CYT» = этот пакет отключён в проверенном списке CleanYourTV для ровно
+# нашей модели и прошивки (examples/xiaomi-mitv-mssp1: MiTV-MSSP1, nino,
+# PI.5925): ТВ пережил перезагрузку, стриминг работает. Проверено ИМИ,
+# на нашем экземпляре — ещё нет. Остальное — только по имени пакета.
 
 #com.xiaomo.tv.milegal            # юридические тексты Xiaomi — не проверено
-#com.xm.webcontent                # веб-контент Xiaomi (вероятно, баннеры) — не проверено
-#com.xiaomi.floatingframe         # всплывающие окна Xiaomi — не проверено
-#com.mitv.tvhome.michannel        # каналы-рекомендации Xiaomi — не проверено
+com.xm.webcontent                 # веб-контент Xiaomi (вероятно, баннеры) — CYT
+com.xiaomi.floatingframe          # всплывающие окна Xiaomi — CYT
+com.mitv.tvhome.michannel         # каналы PatchWall на главном экране Android TV — CYT
 #android.autoinstalls.config.xiaomi.amelie  # автоустановка приложений партнёров — не проверено
+
+
+# ---- РЕКОМЕНДАЦИИ Google (только ПОСЛЕ смены лаунчера) ---------------------
+# В списке CYT для MSSP1, но проверены там с ДРУГИМ лаунчером. Пока главный
+# экран — Google tvlauncher, отключение может сломать ряды на главном экране.
+
+#com.google.android.tvrecommendations              # ленты рекомендаций — CYT, после лаунчера
+#com.google.android.leanbacklauncher.recommendations  # то же для старого лаунчера — CYT, после лаунчера
 
 
 # ---- PATCHWALL как приложение ----------------------------------------------
@@ -47,7 +58,7 @@ com.xiaomi.statistic              # статистика Xiaomi — не про�
 # служит Google tvlauncher. Поэтому его отключение не оставит ТВ без дома;
 # 02-debloat.sh всё равно перепроверит это перед отключением.
 
-#com.mitv.tvhome.atv              # PatchWall — не проверено
+com.mitv.tvhome.atv               # PatchWall — CYT
 
 
 # ---- МЕДИА-ПРИЛОЖЕНИЯ Xiaomi -----------------------------------------------
