@@ -23,4 +23,8 @@
 # У МТС есть второй получатель того же сигнала —
 # androidx.work.impl.background.systemalarm.RescheduleReceiver (WorkManager);
 # его пока не трогаем: сначала замер с одним.
-ru.mts.mtstv/ru.mts.push.repeater.domain.receivers.BootCompletedReceiver   # не проверено
+# ПРОВЕРЕНО 2026-10-25: НЕ РАБОТАЕТ на Android 9. pm disable компонента
+# чужого приложения из adb отвечает «Security exception: Shell cannot change
+# component state … to 2» — Android 9 разрешает shell менять состояние только
+# у приложения целиком. Без root (запрещён правилами) не обойти.
+#ru.mts.mtstv/ru.mts.push.repeater.domain.receivers.BootCompletedReceiver
