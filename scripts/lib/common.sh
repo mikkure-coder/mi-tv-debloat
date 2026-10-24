@@ -173,9 +173,11 @@ is_core_pkg() {
     return 1
 }
 
+# Второй аргумент (необязательный) — имя списка для сообщений; нужен, когда
+# список передан как <(…), у которого «имя файла» — /dev/fd/63.
 check_stoplist() {
     local list="$1" list_name pkg blocked=0
-    list_name="$(basename "$list")"
+    list_name="${2:-$(basename "$list")}"
     local KEEP_NAMES=""
     if [[ -f "$KEEP_FILE" ]]; then
         KEEP_NAMES="$(list_names "$KEEP_FILE")"
