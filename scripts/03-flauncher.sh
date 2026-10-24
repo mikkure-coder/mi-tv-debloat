@@ -142,11 +142,32 @@ log "Компонент home-activity от FLauncher: ${HOME_COMPONENT:-<не о
 
 if [[ -n "$HOME_COMPONENT" && "$HOME_COMPONENT" == *"/"* ]]; then
     if out="$(adb_shell cmd package set-home-activity "$HOME_COMPONENT" 2>&1)"; then
-        log "ОК: FLauncher назначен домашним экраном."
-        log "    ($out)"
+        log "set-home-activity ответил: $out"
     else
         warn "set-home-activity не сработал: $out"
         warn "Это нормально на некоторых прошивках Mi TV."
+        warn "Переходим к ручному назначению ↓"
+        HOME_COMPONENT=""
+    fi
+fi
+
+# --- Шаг 5½. Проверяем на деле, а не по ответу «Success» ---------------------
+# По опыту CleanYourTV (TROUBLESHOOTING, Xiaomi MOOR2 и др.) set-home-activity
+# может напечатать «Success» и ничего не поменять. Поэтому жмём Home так же,
+# как пультом (`input keyevent KEYCODE_HOME`), ждём и спрашиваем у системы,
+# какое приложение РЕАЛЬНО на экране (`dumpsys activity` → mResumedActivity).
+# Если там не FLauncher — штатный лаунчер НЕ отключать: он единственный дом.
+if [[ -n "$HOME_COMPONENT" ]]; then
+    adb_shell input keyevent KEYCODE_HOME
+    sleep 3
+    ON_SCREEN="$(adb_shell dumpsys activity activities | tr -d '\r' \
+        | grep -m1 'mResumedActivity' || true)"
+    log "На экране после Home: ${ON_SCREEN:-<система не ответила>}"
+    if [[ "$ON_SCREEN" == *"$NEW_PKG/"* ]]; then
+        log "ОК: по кнопке Home открывается FLauncher — проверено на деле."
+    else
+        warn "set-home-activity сказал «успех», но по Home открылся НЕ FLauncher."
+        warn "Штатный лаунчер НЕ отключай — сейчас он единственный домашний экран."
         warn "Переходим к ручному назначению ↓"
         HOME_COMPONENT=""
     fi
@@ -166,6 +187,6 @@ fi
 
 log "---"
 log "Готово. Проверка: нажми Home на пульте."
-log "Если всё хорошо — можно раскомментировать 'com.mitv.tvhome' в"
-log "packages/debloat.txt и перезапустить ./scripts/02-debloat.sh,"
-log "чтобы окончательно отключить PatchWall."
+log "Штатный лаунчер (com.google.android.tvlauncher) пусть остаётся включённым —"
+log "это запасной домашний экран. Перед любым следующим шагом перезагрузи ТВ"
+log "и убедись, что после загрузки по Home открывается FLauncher."
