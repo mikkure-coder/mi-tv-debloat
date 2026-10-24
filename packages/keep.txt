@@ -110,3 +110,15 @@ com.mediatek.tv.agent                     # служба чипа MediaTek
 com.mediatek.hotkey.dispatcher            # обработка кнопок пульта
 mitv.service                              # системная служба Xiaomi
 com.xiaomi.mitv.res                       # ресурсы оболочки Xiaomi
+
+
+# ---- Ловушки из чужого опыта (CleanYourTV, issues #884, #62), 2026-10-24 ---
+# setupwraith — мастер первой настройки. На этом ТВ ему ПРИНАДЛЕЖИТ текущая
+# Wi-Fi-сеть (dumpsys wifi: Net ID 0, cname=…setupwraith). Android удаляет
+# сохранённые сети отключённого приложения → ТВ теряет Wi-Fi, а с ним и ADB.
+com.google.android.tungsten.setupwraith   # владелец сохранённой Wi-Fi сети
+# Ядро Android, отключение которого «окирпичило» Mi TV Stick (#884). На этом
+# ТВ (Android 9) их нет, но на прошивках новее они появятся — пусть стоят тут.
+com.google.android.permissioncontroller   # разрешения приложений
+com.android.permissioncontroller          # то же, вариант имени
+com.google.android.modulemetadata         # служебные данные модулей Android
