@@ -3,14 +3,21 @@
 # 99-restore.sh — откат всего, что сделали 02-debloat.sh и 03-flauncher.sh.
 # -----------------------------------------------------------------------------
 # Что делает:
-#   1. Для каждого пакета из packages/debloat.txt выполняет
-#      `pm enable <пакет>` — возвращает его в активное состояние.
+#   1. Сравнивает, какие пакеты отключены на ТВ СЕЙЧАС, с самым первым
+#      бэкапом (backup/<дата>/packages-disabled.txt — снят 01-backup.sh
+#      до любого вмешательства). Всё, что отключено сейчас, но не было
+#      отключено тогда, включает обратно: `pm enable <пакет>`.
+#      Неважно, есть ли пакет в debloat.txt и закомментирован ли он там.
 #   2. (Опционально, после подтверждения) удаляет FLauncher с ТВ.
 #   3. Пытается вернуть PatchWall (com.mitv.tvhome) как домашний экран.
 #
 # Запуск:
 #   ./scripts/99-restore.sh                          — только включить пакеты
 #   REMOVE_FLAUNCHER=1 ./scripts/99-restore.sh       — ещё и удалить FLauncher
+#   DRY_RUN=1 ./scripts/99-restore.sh                — ничего не меняет, только
+#                                                      печатает, что сделал бы
+#   BACKUP=backup/<дата> ./scripts/99-restore.sh     — сравнивать с конкретным
+#                                                      бэкапом, а не с первым
 # =============================================================================
 
 source "$(dirname "$0")/lib/common.sh"
@@ -24,33 +31,59 @@ fi
 
 ensure_adb_connected
 
-DEBLOAT_FILE="$ROOT_DIR/packages/debloat.txt"
-
-if [[ ! -f "$DEBLOAT_FILE" ]]; then
-    err "Нет файла $DEBLOAT_FILE — непонятно, что включать."
-    exit 2
+# Режим «сухой прогон»: показать команды, но ничего не выполнять.
+DRY_RUN="${DRY_RUN:-0}"
+if [[ "$DRY_RUN" == "1" ]]; then
+    warn "DRY_RUN=1 — только печатаю команды, НИЧЕГО не меняю."
 fi
 
-# --- Шаг 1. Включаем всё, что было в списке деблоата -----------------------
+# --- Выбор бэкапа -----------------------------------------------------------
+# Берём САМЫЙ РАННИЙ бэкап: он снят до деблоата и показывает исходное
+# состояние. Более поздний мог быть снят уже после отключений — тогда
+# отключённое нами выглядело бы «родным» и не включилось бы обратно.
+# Папки названы по дате (20261024-230046), поэтому сортировка по имени =
+# сортировка по времени.
+if [[ -n "${BACKUP:-}" ]]; then
+    BK="$BACKUP"
+else
+    BK="$(find "$BACKUP_DIR" -mindepth 2 -maxdepth 2 -name packages-disabled.txt \
+        -printf '%h\n' 2>/dev/null | sort | head -n 1)"
+fi
+
+if [[ -z "$BK" || ! -f "$BK/packages-disabled.txt" ]]; then
+    err "Не найден бэкап с packages-disabled.txt (искал в $BACKUP_DIR)."
+    err "Без него непонятно, какие пакеты были отключены до нас."
+    err "Включить отдельный пакет можно вручную:"
+    err "  adb -s $TV_HOST:$TV_PORT shell pm enable <имя пакета>"
+    exit 2
+fi
+log "Сравниваю с бэкапом: $BK"
+
+# --- Шаг 1. Включаем всё, что отключили после бэкапа ------------------------
 cnt_enabled=0
-cnt_skipped=0
 cnt_errors=0
 
 INSTALLED="$(adb_shell pm list packages | tr -d '\r' | sed 's|^package:||' | sort)"
 
-while IFS= read -r raw_line || [[ -n "$raw_line" ]]; do
-    # Срезаем комментарии и пробелы.
-    line="${raw_line%%#*}"
-    line="$(echo "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+# `pm list packages -d` — пакеты, отключённые сейчас (любым способом,
+# в том числе нашим pm disable-user).
+DISABLED_NOW="$(adb_shell pm list packages -d | tr -d '\r' | sed 's|^package:||' | sort)"
+DISABLED_BEFORE="$(sed 's|^package:||' "$BK/packages-disabled.txt" | sort)"
 
-    [[ -z "$line" ]] && continue
+# comm -23 оставляет строки, которые есть в первом списке и нет во втором:
+# «отключено сейчас» минус «было отключено до нас».
+TO_ENABLE="$(comm -23 <(echo "$DISABLED_NOW" | sed '/^$/d') \
+                      <(echo "$DISABLED_BEFORE" | sed '/^$/d'))"
 
-    pkg="$line"
+if [[ -z "$TO_ENABLE" ]]; then
+    log "Нечего включать: отключены только те пакеты, что были отключены до нас."
+fi
 
-    # Если пакет не установлен — включать нечего.
-    if ! echo "$INSTALLED" | grep -qxF "$pkg"; then
-        log "SKIP: $pkg — не установлен"
-        cnt_skipped=$((cnt_skipped + 1))
+while IFS= read -r pkg; do
+    [[ -z "$pkg" ]] && continue
+
+    if [[ "$DRY_RUN" == "1" ]]; then
+        log "DRY: pm enable $pkg"
         continue
     fi
 
@@ -63,11 +96,10 @@ while IFS= read -r raw_line || [[ -n "$raw_line" ]]; do
         err "FAIL: $pkg — $out"
         cnt_errors=$((cnt_errors + 1))
     fi
-done < "$DEBLOAT_FILE"
+done <<< "$TO_ENABLE"
 
 log "---"
 log "Включено:   $cnt_enabled"
-log "Пропущено:  $cnt_skipped"
 log "Ошибок:     $cnt_errors"
 
 # --- Шаг 2. Опционально: удаление FLauncher --------------------------------
@@ -78,11 +110,15 @@ REMOVE_FLAUNCHER="${REMOVE_FLAUNCHER:-0}"
 if [[ "$REMOVE_FLAUNCHER" == "1" ]]; then
     FL_PKG="me.efesser.flauncher"
     if echo "$INSTALLED" | grep -qxF "$FL_PKG"; then
-        log "Удаляю FLauncher ($FL_PKG)..."
-        if out="$(adb_cmd uninstall "$FL_PKG" 2>&1)"; then
-            log "FLauncher удалён ($out)"
+        if [[ "$DRY_RUN" == "1" ]]; then
+            log "DRY: adb uninstall $FL_PKG"
         else
-            err "Не удалось удалить FLauncher: $out"
+            log "Удаляю FLauncher ($FL_PKG)..."
+            if out="$(adb_cmd uninstall "$FL_PKG" 2>&1)"; then
+                log "FLauncher удалён ($out)"
+            else
+                err "Не удалось удалить FLauncher: $out"
+            fi
         fi
     else
         log "FLauncher не установлен — пропускаю удаление."
@@ -99,8 +135,12 @@ if echo "$INSTALLED" | grep -qxF "$PW"; then
         -a android.intent.action.MAIN -c android.intent.category.HOME "$PW" 2>/dev/null \
         | tr -d '\r' | tail -n 1)"
     if [[ -n "$PW_COMPONENT" && "$PW_COMPONENT" == *"/"* ]]; then
-        adb_shell cmd package set-home-activity "$PW_COMPONENT" >/dev/null 2>&1 || true
-        log "Домашний экран возвращён на PatchWall: $PW_COMPONENT"
+        if [[ "$DRY_RUN" == "1" ]]; then
+            log "DRY: cmd package set-home-activity $PW_COMPONENT"
+        else
+            adb_shell cmd package set-home-activity "$PW_COMPONENT" >/dev/null 2>&1 || true
+            log "Домашний экран возвращён на PatchWall: $PW_COMPONENT"
+        fi
     fi
 fi
 
