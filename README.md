@@ -74,7 +74,7 @@ DRY_RUN=1 ./scripts/05-components.sh
 ```bash
 DRY_RUN=1 ./scripts/99-restore.sh          # показать, что будет включено
 ./scripts/99-restore.sh                    # включить всё, что отключено после бэкапа
-REMOVE_FLAUNCHER=1 ./scripts/99-restore.sh # ещё и удалить FLauncher
+REMOVE_LAUNCHER=1 ./scripts/99-restore.sh  # ещё и удалить новый лаунчер
 ```
 
 99 сравнивает, что отключено сейчас, с самым ранним бэкапом из `backup/`,

@@ -12,12 +12,12 @@
 #      возвращает настройки из backup/appops-before.txt.
 #   1¾. Возвращает отдельные компоненты, отключённые 05-components.sh:
 #      состояния из backup/components-before.txt.
-#   2. (Опционально, после подтверждения) удаляет FLauncher с ТВ.
+#   2. (Опционально) удаляет новый лаунчер с ТВ (FLauncher / CleanYourTV).
 #   3. Возвращает домашний экран, записанный в бэкапе (home-activity.txt).
 #
 # Запуск:
 #   ./scripts/99-restore.sh                          — только включить пакеты
-#   REMOVE_FLAUNCHER=1 ./scripts/99-restore.sh       — ещё и удалить FLauncher
+#   REMOVE_LAUNCHER=1 ./scripts/99-restore.sh        — ещё и удалить новый лаунчер
 #   DRY_RUN=1 ./scripts/99-restore.sh                — ничего не меняет, только
 #                                                      печатает, что сделал бы
 #   BACKUP=backup/<дата> ./scripts/99-restore.sh     — сравнивать с конкретным
@@ -167,27 +167,31 @@ if [[ -f "$COMP_BEFORE" ]]; then
     done < "$COMP_BEFORE"
 fi
 
-# --- Шаг 2. Опционально: удаление FLauncher --------------------------------
-# По умолчанию FLauncher остаётся на ТВ — чтобы не терять его данные.
+# --- Шаг 2. Опционально: удаление нового лаунчера --------------------------
+# По умолчанию лаунчер остаётся на ТВ — чтобы не терять его настройки.
 # Если нужно полностью откатить ТВ в исходное состояние, запусти:
-#   REMOVE_FLAUNCHER=1 ./scripts/99-restore.sh
-REMOVE_FLAUNCHER="${REMOVE_FLAUNCHER:-0}"
-if [[ "$REMOVE_FLAUNCHER" == "1" ]]; then
-    FL_PKG="me.efesser.flauncher"
-    if echo "$INSTALLED" | grep -qxF "$FL_PKG"; then
-        if [[ "$DRY_RUN" == "1" ]]; then
-            log "DRY: adb uninstall $FL_PKG"
-        else
-            log "Удаляю FLauncher ($FL_PKG)..."
-            if out="$(adb_cmd uninstall "$FL_PKG" 2>&1)"; then
-                log "FLauncher удалён ($out)"
-            else
-                err "Не удалось удалить FLauncher: $out"
-            fi
+#   REMOVE_LAUNCHER=1 ./scripts/99-restore.sh
+# (старое имя REMOVE_FLAUNCHER=1 тоже работает). Удаляются оба разрешённых
+# лаунчера, если стоят: FLauncher и лаунчер CleanYourTV. Удаление идёт ДО
+# шага 3, поэтому шаг 3 вернёт домашний экран из бэкапа.
+REMOVE_LAUNCHER="${REMOVE_LAUNCHER:-${REMOVE_FLAUNCHER:-0}}"
+if [[ "$REMOVE_LAUNCHER" == "1" ]]; then
+    for L_PKG in me.efesser.flauncher com.gathin.tvhome; do
+        if ! echo "$INSTALLED" | grep -qxF "$L_PKG"; then
+            log "$L_PKG не установлен — пропускаю удаление."
+            continue
         fi
-    else
-        log "FLauncher не установлен — пропускаю удаление."
-    fi
+        if [[ "$DRY_RUN" == "1" ]]; then
+            log "DRY: adb uninstall $L_PKG"
+            continue
+        fi
+        log "Удаляю лаунчер $L_PKG..."
+        if out="$(adb_cmd uninstall "$L_PKG" 2>&1)"; then
+            log "Лаунчер удалён ($out)"
+        else
+            err "Не удалось удалить $L_PKG: $out"
+        fi
+    done
 fi
 
 # --- Шаг 3. Возвращаем домашний экран, который был до нас -------------------

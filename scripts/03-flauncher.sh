@@ -1,21 +1,25 @@
 #!/usr/bin/env bash
 # =============================================================================
-# 03-flauncher.sh — установка FLauncher и назначение его домашним экраном.
+# 03-flauncher.sh — установка нового лаунчера и назначение его домашним экраном.
 # -----------------------------------------------------------------------------
-# FLauncher — открытый минималистичный launcher для Android TV без рекламы,
-# рекомендаций и телеметрии. Исходники: https://gitlab.com/flauncher/flauncher
-# В F-Droid: me.efesser.flauncher
+# Разрешены два лаунчера (см. CLAUDE.md, раздел 2):
+#   - FLauncher (me.efesser.flauncher) — готовый APK из F-Droid,
+#     https://gitlab.com/flauncher/flauncher;
+#   - лаунчер CleanYourTV (com.gathin.tvhome) — в стиле Apple TV, только
+#     собранный на ноутбуке из исходников https://github.com/Gathin23/cleanyourtv.
+#     Готовый APK кладётся в apks/. Их установщик НЕ используем.
+# Штатный Google-лаунчер скрипт НЕ отключает: он остаётся запасным домом.
 #
 # Что делает этот скрипт:
-#   1. Ищет APK FLauncher в apks/ (локальная копия) или в корне репозитория.
-#   2. Если локального APK нет — пытается скачать его из F-Droid.
+#   1. Ищет APK лаунчера в apks/ (локальная копия) или в корне репозитория.
+#   2. Если локального APK нет — пытается скачать FLauncher из F-Droid.
 #      Если и это не удаётся (нет интернета / F-Droid недоступен) —
 #      выводит понятную инструкцию, где скачать вручную.
 #   3. Устанавливает APK на ТВ через `adb install -r`.
-#   4. Пытается назначить FLauncher домашним экраном через
+#   4. Пытается назначить его домашним экраном через
 #      `cmd package set-home-activity`.
 #   5. Если автоматом не вышло — выводит инструкцию: нажми Home на пульте
-#      и выбери FLauncher в системном диалоге.
+#      и выбери новый лаунчер в системном диалоге.
 #
 # Запуск:
 #   ./scripts/03-flauncher.sh
@@ -23,12 +27,12 @@
 #                                         # только печатает, что сделал бы.
 #
 # Откат: ./scripts/99-restore.sh (домашний экран из бэкапа) и
-#        REMOVE_FLAUNCHER=1 ./scripts/99-restore.sh (удалить FLauncher).
+#        REMOVE_LAUNCHER=1 ./scripts/99-restore.sh (удалить новый лаунчер).
 # =============================================================================
 
 source "$(dirname "$0")/lib/common.sh"
 
-log "=== Этап 3: установка FLauncher ==="
+log "=== Этап 3: установка лаунчера ==="
 
 # IP ТВ — из переменной или .tv-host
 if [[ -z "$TV_HOST" && -f "$ROOT_DIR/.tv-host" ]]; then
@@ -68,8 +72,8 @@ fi
 if [[ -z "$APK" && "$DRY_RUN" == "1" ]]; then
     log "DRY: локального APK нет — скачал бы последний FLauncher с f-droid.org"
     log "DRY: adb install -r <скачанный APK>"
-    log "DRY: cmd package set-home-activity <компонент FLauncher>"
-    log "DRY: input keyevent KEYCODE_HOME и проверка, что открылся FLauncher"
+    log "DRY: cmd package set-home-activity <компонент лаунчера>"
+    log "DRY: input keyevent KEYCODE_HOME и проверка, что открылся новый лаунчер"
     exit 0
 fi
 
@@ -108,7 +112,10 @@ fi
 
 # --- Шаг 3. Если APK так и не появился — выводим инструкцию ------------------
 if [[ -z "$APK" || ! -f "$APK" ]]; then
-    err "APK FLauncher не найден и не скачан. Что делать:"
+    err "APK лаунчера не найден и не скачан. Что делать:"
+    err "  Лаунчер CleanYourTV: собери его из исходников (см. README) и положи"
+    err "    app-release.apk в каталог: $APK_DIR"
+    err "  FLauncher:"
     err "  1. Открой на обычном компьютере страницу:"
     err "       https://f-droid.org/en/packages/me.efesser.flauncher/"
     err "     либо релизы: https://gitlab.com/flauncher/flauncher/-/releases"
@@ -125,7 +132,7 @@ BEFORE="$(adb_shell pm list packages | tr -d '\r' | sort)"
 if [[ "$DRY_RUN" == "1" ]]; then
     log "DRY: adb install -r $APK"
     log "DRY: cmd package set-home-activity <компонент из установленного APK>"
-    log "DRY: input keyevent KEYCODE_HOME и проверка, что открылся FLauncher"
+    log "DRY: input keyevent KEYCODE_HOME и проверка, что открылся новый лаунчер"
     exit 0
 fi
 
@@ -145,17 +152,17 @@ NEW_PKG="$(comm -13 <(echo "$BEFORE") <(echo "$AFTER") | sed 's|^package:||' | h
 # Если новый пакет не появился в diff — значит, он уже был установлен раньше
 # (переустановка). Fallback: ищем по шаблону имени.
 if [[ -z "$NEW_PKG" ]]; then
-    NEW_PKG="$(echo "$AFTER" | grep -E '^package:(me\.efesser\.flauncher|.*flauncher.*)$' | head -n 1 | sed 's|^package:||')"
+    NEW_PKG="$(echo "$AFTER" | grep -E '^package:(me\.efesser\.flauncher|com\.gathin\.tvhome)$' | head -n 1 | sed 's|^package:||')"
 fi
 
 if [[ -z "$NEW_PKG" ]]; then
-    warn "Не могу определить имя установленного пакета FLauncher."
+    warn "Не могу определить имя установленного пакета лаунчера."
     warn "Это не критично: установка прошла, home-activity назначь вручную"
     warn "через меню ТВ (Настройки → Приложения → Домашний экран)."
     exit 0
 fi
 
-log "Пакет FLauncher: $NEW_PKG"
+log "Пакет лаунчера: $NEW_PKG"
 
 # --- Шаг 5. Пытаемся назначить его home-activity -----------------------------
 # Для set-home-activity нужен компонент вида "<pkg>/<активность>".
@@ -164,7 +171,7 @@ HOME_COMPONENT="$(adb_shell cmd package resolve-activity --brief \
     -a android.intent.action.MAIN -c android.intent.category.HOME "$NEW_PKG" 2>/dev/null \
     | tr -d '\r' | tail -n 1)"
 
-log "Компонент home-activity от FLauncher: ${HOME_COMPONENT:-<не определён>}"
+log "Компонент home-activity от $NEW_PKG: ${HOME_COMPONENT:-<не определён>}"
 
 if [[ -n "$HOME_COMPONENT" && "$HOME_COMPONENT" == *"/"* ]]; then
     if out="$(adb_shell cmd package set-home-activity "$HOME_COMPONENT" 2>&1)"; then
@@ -182,7 +189,7 @@ fi
 # может напечатать «Success» и ничего не поменять. Поэтому жмём Home так же,
 # как пультом (`input keyevent KEYCODE_HOME`), ждём и спрашиваем у системы,
 # какое приложение РЕАЛЬНО на экране (`dumpsys activity` → mResumedActivity).
-# Если там не FLauncher — штатный лаунчер НЕ отключать: он единственный дом.
+# Если там не новый лаунчер — штатный лаунчер НЕ отключать: он единственный дом.
 if [[ -n "$HOME_COMPONENT" ]]; then
     adb_shell input keyevent KEYCODE_HOME
     sleep 3
@@ -190,9 +197,9 @@ if [[ -n "$HOME_COMPONENT" ]]; then
         | grep -m1 'mResumedActivity' || true)"
     log "На экране после Home: ${ON_SCREEN:-<система не ответила>}"
     if [[ "$ON_SCREEN" == *"$NEW_PKG/"* ]]; then
-        log "ОК: по кнопке Home открывается FLauncher — проверено на деле."
+        log "ОК: по кнопке Home открывается $NEW_PKG — проверено на деле."
     else
-        warn "set-home-activity сказал «успех», но по Home открылся НЕ FLauncher."
+        warn "set-home-activity сказал «успех», но по Home открылся НЕ $NEW_PKG."
         warn "Штатный лаунчер НЕ отключай — сейчас он единственный домашний экран."
         warn "Переходим к ручному назначению ↓"
         HOME_COMPONENT=""
@@ -202,17 +209,17 @@ fi
 # --- Шаг 6. Ручной fallback --------------------------------------------------
 if [[ -z "$HOME_COMPONENT" ]]; then
     log "---"
-    log "Назначь FLauncher домашним экраном вручную:"
+    log "Назначь новый лаунчер домашним экраном вручную:"
     log "  1. Нажми Home на пульте телевизора."
     log "  2. ТВ покажет диалог выбора лаунчера."
-    log "  3. Выбери 'FLauncher' и 'Всегда' (или 'Запомнить выбор')."
+    log "  3. Выбери его и 'Всегда' (или 'Запомнить выбор')."
     log ""
     log "Если диалог не появился:"
-    log "  Настройки → Приложения → По умолчанию → Домашний экран → FLauncher."
+    log "  Настройки → Приложения → По умолчанию → Домашний экран."
 fi
 
 log "---"
 log "Готово. Проверка: нажми Home на пульте."
 log "Штатный лаунчер (com.google.android.tvlauncher) пусть остаётся включённым —"
 log "это запасной домашний экран. Перед любым следующим шагом перезагрузи ТВ"
-log "и убедись, что после загрузки по Home открывается FLauncher."
+log "и убедись, что после загрузки по Home открывается новый лаунчер."
