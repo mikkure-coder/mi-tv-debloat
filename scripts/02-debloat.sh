@@ -7,8 +7,9 @@
 #   2. Пустые строки и строки, начинающиеся с «#», пропускаются.
 #   3. Для каждого пакета:
 #        a. проверяем, что он реально установлен на ТВ;
-#        b. если это PatchWall-launcher (com.mitv.tvhome) — делаем
-#           дополнительную проверку: есть ли на устройстве другой home
+#        b. если это домашний экран (по ответу ТВ) или PatchWall
+#           (com.mitv.tvhome / com.mitv.tvhome.atv) — делаем
+#           дополнительную проверку: останется ли на устройстве другой home
 #           (FLauncher или штатный Android TV launcher). Если нет —
 #           ОТКАЗЫВАЕМСЯ отключать, чтобы не оставить ТВ без домашнего экрана;
 #        c. выполняем `pm disable-user --user 0 <пакет>`.
@@ -56,6 +57,19 @@ fi
 # ровно того, что сейчас на ТВ.
 INSTALLED="$(adb_shell pm list packages | tr -d '\r' | sed 's|^package:||' | sort)"
 
+# Какие пакеты СЕЙЧАС умеют быть домашним экраном. Спрашиваем у самого ТВ,
+# а не угадываем по имени: на Mi TV 4S (2026-10-24) домом оказался Google
+# tvlauncher, а PatchWall назывался com.mitv.tvhome.atv и домом не был.
+# Отключённые пакеты система сюда не включает — значит, «запасной» лаунчер,
+# который уже выключен, за запасной не посчитается.
+# FallbackHome из com.android.tv.settings — аварийная заглушка без иконок,
+# настоящим домашним экраном она не считается.
+HOME_PKGS="$(adb_shell cmd package query-activities --brief \
+    -a android.intent.action.MAIN -c android.intent.category.HOME \
+    | tr -d '\r' | grep -oE '^[[:space:]]*[A-Za-z0-9_.]+/' | tr -d ' /' \
+    | grep -vxF 'com.android.tv.settings' | sort -u)"
+log "Домашние экраны на ТВ: $(echo "$HOME_PKGS" | tr '\n' ' ')"
+
 # Счётчики. В конце напечатаем сводку.
 cnt_disabled=0   # сколько успешно отключили
 cnt_skipped=0    # сколько пропустили (не установлены или уже выключены)
@@ -82,13 +96,14 @@ while IFS= read -r raw_line || [[ -n "$raw_line" ]]; do
         continue
     fi
 
-    # --- Шаг B. Особый случай: PatchWall launcher ---------------------------
-    # Если это главный Xiaomi launcher — удостоверимся, что у ТВ есть
-    # запасной home-screen. Иначе получится «кирпич» без домашнего экрана
+    # --- Шаг B. Особый случай: домашний экран (launcher) --------------------
+    # Если пакет — домашний экран (по ответу ТВ) или PatchWall (по имени),
+    # удостоверимся, что после отключения у ТВ останется другой home-screen.
+    # Иначе получится «кирпич» без домашнего экрана
     # (ресетится только фабричным сбросом).
-    if [[ "$pkg" == "com.mitv.tvhome" ]]; then
-        if ! echo "$INSTALLED" | grep -qE '^(com\.google\.android\.tvlauncher|com\.google\.android\.leanbacklauncher|me\.efesser\.flauncher)$'; then
-            warn "SKIP: $pkg — на ТВ нет fallback-launcher"
+    if echo "$HOME_PKGS" | grep -qxF "$pkg" || [[ "$pkg" =~ ^com\.mitv\.tvhome(\.atv)?$ ]]; then
+        if ! echo "$HOME_PKGS" | grep -vxF "$pkg" | grep -q .; then
+            warn "SKIP: $pkg — после отключения на ТВ не останется домашнего экрана"
             warn "       (ни штатного Android TV, ни FLauncher)."
             warn "       Сначала запусти 03-flauncher.sh, потом перезапусти этот скрипт."
             cnt_skipped=$((cnt_skipped + 1))
