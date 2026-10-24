@@ -40,76 +40,16 @@ fi
 
 # Файл со списком «мусора». Это тот самый, который редактирует пользователь.
 DEBLOAT_FILE="$ROOT_DIR/packages/debloat.txt"
-KEEP_FILE="$ROOT_DIR/packages/keep.txt"
 
 if [[ ! -f "$DEBLOAT_FILE" ]]; then
     err "Нет файла $DEBLOAT_FILE — нечего отключать."
     exit 2
 fi
 
-# list_names <файл> — имена пакетов из файла: без комментариев (всё после «#»)
-# и пустых строк, по одному на строку.
-list_names() {
-    sed -e 's/#.*//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' "$1" | sed '/^$/d'
-}
-
-# --- Жёсткий запрет: ядро Android и стоп-лист -------------------------------
-# Проверяем ВЕСЬ debloat.txt ДО подключения к ТВ: если в нём есть хоть один
-# запрещённый пакет, не отключаем вообще ничего. Обойти запрет переменной
-# нельзя — нужно убрать строку из debloat.txt.
-# Причина: на Mi TV Stick (CleanYourTV, issue #884) агент отключил части
-# Android — permissioncontroller, packageinstaller, ext.services и др. —
-# и приставка перестала загружаться навсегда: ADB по сети стартует слишком
-# поздно, чтобы что-то вернуть.
-# Запрещено:
-#   - всё из packages/keep.txt;
-#   - встроенный список ниже — на случай, если keep.txt испортят или удалят;
-#   - пакеты по шаблону: оверлеи модулей Android и контент-провайдеры
-#     (кроме календаря, контактов и словаря — их отключение безопасно).
-is_core_pkg() {
-    case "$1" in
-        android|com.android.systemui|com.android.shell|com.android.phone|\
-        com.android.settings|com.android.tv.settings|\
-        com.google.android.permissioncontroller|com.android.permissioncontroller|\
-        com.google.android.packageinstaller|com.android.packageinstaller|\
-        com.google.android.ext.services|com.google.android.ext.shared|\
-        com.google.android.modulemetadata|\
-        com.google.android.tungsten.setupwraith|\
-        com.google.android.overlay.modules.*)
-            return 0 ;;
-        com.android.providers.calendar|com.android.providers.contacts|\
-        com.android.providers.userdictionary|com.android.providers.blockednumber)
-            return 1 ;;
-        com.android.providers.*)
-            return 0 ;;
-    esac
-    return 1
-}
-
-KEEP_NAMES=""
-if [[ -f "$KEEP_FILE" ]]; then
-    KEEP_NAMES="$(list_names "$KEEP_FILE")"
-else
-    warn "Нет $KEEP_FILE — проверяю только по встроенному списку ядра."
-fi
-
-blocked=0
-while IFS= read -r pkg; do
-    [[ -z "$pkg" ]] && continue
-    if is_core_pkg "$pkg" || echo "$KEEP_NAMES" | grep -qxF "$pkg"; then
-        err "ЗАПРЕЩЕНО: $pkg есть в debloat.txt, но это ядро Android или стоп-лист."
-        blocked=$((blocked + 1))
-    fi
-done < <(list_names "$DEBLOAT_FILE")
-
-if (( blocked > 0 )); then
-    err "Ничего не отключаю. Убери эти строки из packages/debloat.txt"
-    err "(или закомментируй «#») и запусти скрипт снова."
-    err "Почему так строго: отключение таких пакетов может оставить ТВ"
-    err "не загружающимся — и вернуть его можно только сбросом или в сервисе."
-    exit 2
-fi
-log "Проверка стоп-листа: запрещённых пакетов в debloat.txt нет."
+# Жёсткий запрет: весь debloat.txt сверяется со стоп-листом (keep.txt +
+# ядро Android) ДО подключения к ТВ. Совпадение — выход без единого
+# отключения. Сама проверка и её обоснование — в lib/common.sh.
+check_stoplist "$DEBLOAT_FILE"
 
 ensure_adb_connected
 

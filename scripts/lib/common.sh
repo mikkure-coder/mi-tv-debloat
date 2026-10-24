@@ -128,3 +128,75 @@ adb_cmd() {
     # </dev/null — по той же причине, что и в adb_shell.
     adb -s "$TV_HOST:$TV_PORT" "$@" </dev/null
 }
+
+# --- Стоп-лист -----------------------------------------------------------------
+# Файл со списком пакетов, которые нельзя трогать никаким скриптом проекта.
+KEEP_FILE="$ROOT_DIR/packages/keep.txt"
+
+# list_names <файл> — имена пакетов из файла: без комментариев (всё после «#»)
+# и пустых строк, по одному на строку.
+list_names() {
+    sed -e 's/#.*//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' "$1" | sed '/^$/d'
+}
+
+# --- Жёсткий запрет: ядро Android и стоп-лист -------------------------------
+# check_stoplist <файл списка> проверяет ВЕСЬ список ДО подключения к ТВ:
+# если в нём есть хоть один запрещённый пакет, скрипт выходит, ничего не
+# сделав. Обойти запрет переменной нельзя — нужно убрать строку из списка.
+# Используется в 02 (отключение) и 04 (запрет работы в фоне).
+# Причина: на Mi TV Stick (CleanYourTV, issue #884) агент отключил части
+# Android — permissioncontroller, packageinstaller, ext.services и др. —
+# и приставка перестала загружаться навсегда: ADB по сети стартует слишком
+# поздно, чтобы что-то вернуть.
+# Запрещено:
+#   - всё из packages/keep.txt;
+#   - встроенный список ниже — на случай, если keep.txt испортят или удалят;
+#   - пакеты по шаблону: оверлеи модулей Android и контент-провайдеры
+#     (кроме календаря, контактов и словаря — их отключение безопасно).
+is_core_pkg() {
+    case "$1" in
+        android|com.android.systemui|com.android.shell|com.android.phone|\
+        com.android.settings|com.android.tv.settings|\
+        com.google.android.permissioncontroller|com.android.permissioncontroller|\
+        com.google.android.packageinstaller|com.android.packageinstaller|\
+        com.google.android.ext.services|com.google.android.ext.shared|\
+        com.google.android.modulemetadata|\
+        com.google.android.tungsten.setupwraith|\
+        com.google.android.overlay.modules.*)
+            return 0 ;;
+        com.android.providers.calendar|com.android.providers.contacts|\
+        com.android.providers.userdictionary|com.android.providers.blockednumber)
+            return 1 ;;
+        com.android.providers.*)
+            return 0 ;;
+    esac
+    return 1
+}
+
+check_stoplist() {
+    local list="$1" list_name pkg blocked=0
+    list_name="$(basename "$list")"
+    local KEEP_NAMES=""
+    if [[ -f "$KEEP_FILE" ]]; then
+        KEEP_NAMES="$(list_names "$KEEP_FILE")"
+    else
+        warn "Нет $KEEP_FILE — проверяю только по встроенному списку ядра."
+    fi
+
+    while IFS= read -r pkg; do
+        [[ -z "$pkg" ]] && continue
+        if is_core_pkg "$pkg" || echo "$KEEP_NAMES" | grep -qxF "$pkg"; then
+            err "ЗАПРЕЩЕНО: $pkg есть в $list_name, но это ядро Android или стоп-лист."
+            blocked=$((blocked + 1))
+        fi
+    done < <(list_names "$list")
+
+    if (( blocked > 0 )); then
+        err "Ничего не делаю. Убери эти строки из packages/$list_name"
+        err "(или закомментируй «#») и запусти скрипт снова."
+        err "Почему так строго: отключение таких пакетов может оставить ТВ"
+        err "не загружающимся — и вернуть его можно только сбросом или в сервисе."
+        exit 2
+    fi
+    log "Проверка стоп-листа: запрещённых пакетов в $list_name нет."
+}
