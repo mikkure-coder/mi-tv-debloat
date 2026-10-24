@@ -9,7 +9,7 @@
 #      отключено тогда, включает обратно: `pm enable <пакет>`.
 #      Неважно, есть ли пакет в debloat.txt и закомментирован ли он там.
 #   2. (Опционально, после подтверждения) удаляет FLauncher с ТВ.
-#   3. Пытается вернуть PatchWall (com.mitv.tvhome) как домашний экран.
+#   3. Возвращает домашний экран, записанный в бэкапе (home-activity.txt).
 #
 # Запуск:
 #   ./scripts/99-restore.sh                          — только включить пакеты
@@ -125,23 +125,44 @@ if [[ "$REMOVE_FLAUNCHER" == "1" ]]; then
     fi
 fi
 
-# --- Шаг 3. Пробуем вернуть PatchWall как home ------------------------------
-# Если PatchWall был отключён и теперь снова включён, он должен автоматически
-# стать выбором по умолчанию (у Xiaomi он единственный помечен как home-app).
-# Но подстрахуемся: явно скажем системе использовать его.
-PW="com.mitv.tvhome"
-if echo "$INSTALLED" | grep -qxF "$PW"; then
-    PW_COMPONENT="$(adb_shell cmd package resolve-activity --brief \
-        -a android.intent.action.MAIN -c android.intent.category.HOME "$PW" 2>/dev/null \
-        | tr -d '\r' | tail -n 1)"
-    if [[ -n "$PW_COMPONENT" && "$PW_COMPONENT" == *"/"* ]]; then
-        if [[ "$DRY_RUN" == "1" ]]; then
-            log "DRY: cmd package set-home-activity $PW_COMPONENT"
-        else
-            adb_shell cmd package set-home-activity "$PW_COMPONENT" >/dev/null 2>&1 || true
-            log "Домашний экран возвращён на PatchWall: $PW_COMPONENT"
-        fi
-    fi
+# --- Шаг 3. Возвращаем домашний экран, который был до нас -------------------
+# Какой лаунчер был домом, записано в бэкапе (home-activity.txt), например
+# com.google.android.tvlauncher/.MainActivity. Не угадываем «PatchWall»:
+# на Mi TV 4S (2026-10-24) домом был Google tvlauncher, а не PatchWall.
+# Бэкапы, снятые до исправления 01-backup.sh, вместо компонента содержат
+# «No activity found» — такие пропускаем и берём самый ранний нормальный.
+HOME_BEFORE=""
+if [[ -n "${BACKUP:-}" ]]; then
+    HOME_FILES="$BACKUP/home-activity.txt"
+else
+    HOME_FILES="$(find "$BACKUP_DIR" -mindepth 2 -maxdepth 2 -name home-activity.txt \
+        2>/dev/null | sort)"
+fi
+while IFS= read -r f; do
+    [[ -f "$f" ]] || continue
+    # grep без совпадений вернёт ошибку — для «не нашли» это нормально.
+    HOME_BEFORE="$(grep -E '^[A-Za-z0-9_.]+/' "$f" | tail -n 1 || true)"
+    [[ -n "$HOME_BEFORE" ]] && break
+done <<< "$HOME_FILES"
+
+HOME_NOW="$(adb_shell cmd package resolve-activity --brief \
+    -a android.intent.action.MAIN -c android.intent.category.HOME \
+    | tr -d '\r' | tail -n 1)"
+
+log "---"
+if [[ -z "$HOME_BEFORE" ]]; then
+    warn "В бэкапах не записан домашний экран — его не трогаю."
+    warn "Если после Home на пульте появится выбор — выбери нужный и 'Всегда'."
+elif [[ "$HOME_NOW" == "$HOME_BEFORE" ]]; then
+    log "Домашний экран уже исходный: $HOME_NOW"
+elif [[ "$DRY_RUN" == "1" ]]; then
+    log "DRY: cmd package set-home-activity $HOME_BEFORE   (сейчас: $HOME_NOW)"
+elif out="$(adb_shell cmd package set-home-activity "$HOME_BEFORE" 2>&1)"; then
+    log "Домашний экран возвращён: $HOME_BEFORE  ($out)"
+else
+    # Не роняем скрипт: пакеты уже включены, а дом можно выбрать пультом.
+    warn "Не удалось назначить домашний экран: $out"
+    warn "Нажми Home на пульте и выбери $HOME_BEFORE, затем 'Всегда'."
 fi
 
 log "---"
