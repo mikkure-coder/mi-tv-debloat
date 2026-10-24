@@ -87,10 +87,13 @@ scripts/02-debloat.sh   — отключение пакетов по debloat.txt
 scripts/03-flauncher.sh — поиск/скачивание APK, установка, назначение home
 scripts/04-background.sh — запрет работы в фоне (appops) по background.txt;
                           исходные режимы → backup/appops-before.txt
+scripts/05-components.sh — отключение отдельных компонентов по components.txt;
+                          исходные состояния → backup/components-before.txt
 scripts/99-restore.sh   — pm enable всего отключённого; REMOVE_FLAUNCHER=1
 packages/debloat.txt    — что отключаем; группы от безопасных к рискованным,
                           каждая строка с комментарием «что это и чем грозит»
 packages/background.txt — кому запретить фон, НЕ отключая (иконка остаётся)
+packages/components.txt — «пакет/компонент»: какие части приложений отключить
 packages/keep.txt       — стоп-лист; 02 читает его и при совпадении не делает ничего
 ```
 

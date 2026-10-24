@@ -10,6 +10,8 @@
 #      Неважно, есть ли пакет в debloat.txt и закомментирован ли он там.
 #   1½. Снимает запрет работы в фоне, поставленный 04-background.sh:
 #      возвращает настройки из backup/appops-before.txt.
+#   1¾. Возвращает отдельные компоненты, отключённые 05-components.sh:
+#      состояния из backup/components-before.txt.
 #   2. (Опционально, после подтверждения) удаляет FLauncher с ТВ.
 #   3. Возвращает домашний экран, записанный в бэкапе (home-activity.txt).
 #
@@ -132,6 +134,37 @@ if [[ -f "$APPOPS_BEFORE" ]]; then
         adb_shell cmd appops write-settings >/dev/null 2>&1 \
             || warn "Не удалось сразу записать настройки фона на диск."
     fi
+fi
+
+# --- Шаг 1¾. Возвращаем отдельные компоненты (то, что делал 05) ------------
+# 05-components.sh записал исходное состояние каждой части приложения в
+# backup/components-before.txt («<пакет>/<компонент> <состояние>»).
+# default → pm default-state (ровно как было), enabled → pm enable,
+# disabled → pm disable (было отключено ещё до нас — так и оставляем).
+COMP_BEFORE="$BACKUP_DIR/components-before.txt"
+if [[ -f "$COMP_BEFORE" ]]; then
+    log "---"
+    log "Возвращаю состояния компонентов из $COMP_BEFORE"
+    while read -r comp state; do
+        [[ -z "$comp" ]] && continue
+        if ! echo "$INSTALLED" | grep -qxF "${comp%%/*}"; then
+            log "SKIP: $comp — пакет не установлен"
+            continue
+        fi
+        case "$state" in
+            default)  cmd=(default-state --user 0 "$comp") ;;
+            enabled)  cmd=(enable --user 0 "$comp") ;;
+            disabled) cmd=(disable --user 0 "$comp") ;;
+            *) err "FAIL: $comp — непонятное состояние «$state» в бэкапе"; continue ;;
+        esac
+        if [[ "$DRY_RUN" == "1" ]]; then
+            log "DRY: pm ${cmd[*]}"
+        elif out="$(adb_shell pm "${cmd[@]}" 2>&1)"; then
+            log "COMP: $comp → $state"
+        else
+            err "FAIL: $comp — $out"
+        fi
+    done < "$COMP_BEFORE"
 fi
 
 # --- Шаг 2. Опционально: удаление FLauncher --------------------------------

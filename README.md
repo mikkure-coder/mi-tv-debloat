@@ -56,6 +56,11 @@ DRY_RUN=1 ./scripts/02-debloat.sh
 DRY_RUN=1 ./scripts/04-background.sh
 ./scripts/04-background.sh
 
+# 2¾. Отключение отдельных частей приложений (например, автозапуска при
+#      загрузке ТВ) — по списку packages/components.txt, иконка остаётся
+DRY_RUN=1 ./scripts/05-components.sh
+./scripts/05-components.sh
+
 # 3. Установка FLauncher и назначение его домашним экраном
 ./scripts/03-flauncher.sh
 ```
