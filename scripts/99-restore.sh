@@ -127,6 +127,11 @@ if [[ -f "$APPOPS_BEFORE" ]]; then
             err "FAIL: $pkg — $out"
         fi
     done < "$APPOPS_BEFORE"
+    # Записать на диск сразу — см. комментарий в 04-background.sh.
+    if [[ "$DRY_RUN" != "1" ]]; then
+        adb_shell cmd appops write-settings >/dev/null 2>&1 \
+            || warn "Не удалось сразу записать настройки фона на диск."
+    fi
 fi
 
 # --- Шаг 2. Опционально: удаление FLauncher --------------------------------

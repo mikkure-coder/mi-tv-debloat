@@ -113,6 +113,18 @@ while IFS= read -r pkg; do
     fi
 done < <(list_names "$BG_FILE")
 
+# Android пишет настройки appops на диск не сразу, а с задержкой (до 30 мин).
+# Перезагрузка раньше — и запрет теряется: так и вышло на Mi TV 4S
+# 2026-10-25 после `adb reboot`. write-settings записывает их немедленно.
+if [[ "$DRY_RUN" != "1" ]] && (( cnt_done > 0 )); then
+    if adb_shell cmd appops write-settings >/dev/null 2>&1; then
+        log "Настройки записаны на диск (appops write-settings)."
+    else
+        warn "Не удалось сразу записать настройки на диск — запрет может"
+        warn "не пережить перезагрузку в ближайшие 30 минут."
+    fi
+fi
+
 log "---"
 log "Итого:"
 log "  ограничено: $cnt_done"
