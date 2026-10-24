@@ -114,11 +114,17 @@ ensure_adb_connected() {
 # Обёртка над `adb shell`, которая всегда адресует команду конкретному ТВ.
 # Это защищает от ситуации, когда к компьютеру подключён и телефон, и ТВ:
 # без явного `-s` adb выдаст ошибку «more than one device».
+#
+# `</dev/null` — обязательно. `adb shell` пересылает на ТВ всё, что приходит
+# ему на стандартный ввод. Внутри цикла `while read … done < debloat.txt`
+# первый же вызов «съедал» остаток файла, и цикл обрывался после первого
+# пакета (поймано на живом ТВ 2026-10-24). Пустой ввод это исключает.
 adb_shell() {
-    adb -s "$TV_HOST:$TV_PORT" shell "$@"
+    adb -s "$TV_HOST:$TV_PORT" shell "$@" </dev/null
 }
 
 # Аналогично для `adb install`, `adb pull` и т.п.
 adb_cmd() {
-    adb -s "$TV_HOST:$TV_PORT" "$@"
+    # </dev/null — по той же причине, что и в adb_shell.
+    adb -s "$TV_HOST:$TV_PORT" "$@" </dev/null
 }
