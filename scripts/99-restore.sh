@@ -96,7 +96,7 @@ fi
 PW="com.mitv.tvhome"
 if echo "$INSTALLED" | grep -qxF "$PW"; then
     PW_COMPONENT="$(adb_shell cmd package resolve-activity --brief \
-        -c android.intent.category.HOME "$PW" 2>/dev/null \
+        -a android.intent.action.MAIN -c android.intent.category.HOME "$PW" 2>/dev/null \
         | tr -d '\r' | tail -n 1)"
     if [[ -n "$PW_COMPONENT" && "$PW_COMPONENT" == *"/"* ]]; then
         adb_shell cmd package set-home-activity "$PW_COMPONENT" >/dev/null 2>&1 || true

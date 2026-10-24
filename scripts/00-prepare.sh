@@ -72,7 +72,7 @@ log "Fingerprint: $FP"
 # что после всех манипуляций launcher переключился на FLauncher.
 log "---"
 log "Текущий домашний экран (home-activity):"
-adb_shell cmd package resolve-activity --brief -c android.intent.category.HOME \
+adb_shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME \
     | tail -n 1 | tee -a "$LOG_FILE"
 
 # Проверим, установлен ли стандартный Android TV launcher — он нужен как

@@ -135,7 +135,7 @@ log "Пакет FLauncher: $NEW_PKG"
 # Для set-home-activity нужен компонент вида "<pkg>/<активность>".
 # Запрашиваем у package manager, какую активность пакет регистрирует как HOME.
 HOME_COMPONENT="$(adb_shell cmd package resolve-activity --brief \
-    -c android.intent.category.HOME "$NEW_PKG" 2>/dev/null \
+    -a android.intent.action.MAIN -c android.intent.category.HOME "$NEW_PKG" 2>/dev/null \
     | tr -d '\r' | tail -n 1)"
 
 log "Компонент home-activity от FLauncher: ${HOME_COMPONENT:-<не определён>}"

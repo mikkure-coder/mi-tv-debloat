@@ -75,8 +75,10 @@ log "Уже отключено:            $(wc -l < "$BK/packages-disabled.txt"
 # cmd package resolve-activity … возвращает описание активности в формате,
 # из которого видно и имя пакета, и имя класса активности. Полезно для
 # точного знания, что было до нашего вмешательства.
+# `-a android.intent.action.MAIN` обязателен: без него Android 9 отвечает
+# «No activity found» (проверено на Mi TV 4S, 2026-10-24).
 adb_shell cmd package resolve-activity --brief \
-    -c android.intent.category.HOME | tr -d '\r' > "$BK/home-activity.txt"
+    -a android.intent.action.MAIN -c android.intent.category.HOME | tr -d '\r' > "$BK/home-activity.txt"
 log "home-activity.txt:"
 cat "$BK/home-activity.txt" | tee -a "$LOG_FILE"
 

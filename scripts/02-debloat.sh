@@ -127,7 +127,7 @@ log "  ошибок:     $cnt_errors"
 log "---"
 log "Текущий домашний экран:"
 adb_shell cmd package resolve-activity --brief \
-    -c android.intent.category.HOME | tr -d '\r' | tee -a "$LOG_FILE"
+    -a android.intent.action.MAIN -c android.intent.category.HOME | tr -d '\r' | tee -a "$LOG_FILE"
 
 log "---"
 log "Готово. Проверь ТВ: нажми Home на пульте, перезагрузи через 'Настройки → Перезагрузка'."
