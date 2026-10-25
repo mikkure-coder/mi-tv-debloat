@@ -15,5 +15,7 @@
   "app_glow": true,
   "glow_style": "horizon",
   "focus_overshoot": false,
-  "advanced_effects": true
+  "advanced_effects": true,
+  "tile_menu": true,
+  "app_library": true
 }
