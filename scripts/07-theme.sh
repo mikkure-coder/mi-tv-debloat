@@ -43,7 +43,8 @@ RESET=0
 if [[ "$ARG" == "--reset" ]]; then
     RESET=1
 else
-    THEME="$(cd "$ARG" 2>/dev/null && pwd || true)"
+    # Полный путь к папке темы; если папки нет — пустая строка.
+    THEME="$(cd "$ARG" 2>/dev/null && pwd)" || THEME=""
     if [[ -z "$THEME" || ! -f "$THEME/config.json" ]]; then
         err "Нет темы: в «$ARG» должен лежать config.json."
         exit 2

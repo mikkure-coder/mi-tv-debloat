@@ -59,12 +59,19 @@ mkdir -p "$APK_DIR"
 #   3) Попробовать скачать из F-Droid.
 APK=""
 
-# Берём последний APK в apks/ (ls -t сортирует по времени, head -n 1 — первый).
-if ls "$APK_DIR"/*.apk >/dev/null 2>&1; then
-    APK="$(ls -t "$APK_DIR"/*.apk | head -n 1)"
+# newest_apk <каталог> — самый свежий по времени изменения *.apk в каталоге
+# (find печатает «время путь», sort -rn ставит новейший первым).
+newest_apk() {
+    find "$1" -maxdepth 1 -name '*.apk' -printf '%T@ %p\n' 2>/dev/null \
+        | sort -rn | head -n 1 | cut -d' ' -f2-
+}
+
+# Берём последний APK в apks/.
+if [[ -n "$(newest_apk "$APK_DIR")" ]]; then
+    APK="$(newest_apk "$APK_DIR")"
     log "Нашёл локальный APK: $APK"
-elif ls "$ROOT_DIR"/*.apk >/dev/null 2>&1; then
-    APK="$(ls -t "$ROOT_DIR"/*.apk | head -n 1)"
+elif [[ -n "$(newest_apk "$ROOT_DIR")" ]]; then
+    APK="$(newest_apk "$ROOT_DIR")"
     log "Нашёл APK в корне репозитория: $APK"
 fi
 

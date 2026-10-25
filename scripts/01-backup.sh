@@ -80,7 +80,7 @@ log "Уже отключено:            $(wc -l < "$BK/packages-disabled.txt"
 adb_shell cmd package resolve-activity --brief \
     -a android.intent.action.MAIN -c android.intent.category.HOME | tr -d '\r' > "$BK/home-activity.txt"
 log "home-activity.txt:"
-cat "$BK/home-activity.txt" | tee -a "$LOG_FILE"
+tee -a "$LOG_FILE" < "$BK/home-activity.txt"
 
 # --- Короткий манифест бэкапа ----------------------------------------------
 # Чтобы человек, открывший папку бэкапа через месяц, сразу понимал,
