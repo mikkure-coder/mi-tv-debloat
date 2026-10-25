@@ -59,7 +59,10 @@ com.google.android.tts
 com.google.android.tv
 com.google.android.tv.remote
 com.google.android.tv.remote.service
-com.google.android.katniss
+# com.google.android.katniss (голосовой ассистент Google) УБРАН из стоп-листа
+# 2026-10-25 решением владельца: голосом не пользуется. Отключается через 02;
+# кнопка микрофона на пульте и голосовой поиск в приложениях перестанут работать.
+#com.google.android.katniss
 com.google.android.leanbacklauncher
 com.google.android.marvin.talkback
 
