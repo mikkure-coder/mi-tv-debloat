@@ -73,10 +73,29 @@ com.google.android.inputmethod.latin
 com.android.inputmethod.latin
 
 
-# ---- Xiaomi и чип Amlogic (по CleanYourTV, не проверено) -------------------
-# CleanYourTV на этой модели сознательно оставил их включёнными как системные.
-# Точные имена пакетов com.droidlogic.* (система чипа Amlogic) допишем после
-# бэкапа: шаблоны этот файл не понимает, нужны полные имена.
+# ---- Найдено на живой приставке, 2026-10-25 (Android 14) -------------------
+# Пакеты, которые реально стоят на приставке и отвечают за базовую работу:
+# система чипа Amlogic (droidlogic), сеть, Wi-Fi, звук, оформление Xiaomi.
+# Назначение определено по имени и роли в Android, не экспериментом:
+# проверять «что будет, если выключить» на них НЕ нужно.
 mitv.service                              # системная служба Xiaomi
 com.mi.bluetooth                          # Bluetooth Xiaomi (пульт)
-com.xiaomi.gtv.settings                   # настройки Xiaomi внутри Google TV
+com.droidlogic                            # система чипа Amlogic
+com.droidlogic.mdnsoffload
+com.droidlogic.overlay
+com.droidlogic.systemui.overlay
+com.droidlogic.tvprovider.overlay
+com.droidlogic.wifitetheringoverlay
+com.android.mitv.framework.rro            # оформление системы от Xiaomi
+com.android.tv.settings.MiBoxGTVSettingsOverlay
+com.android.tv.settings.MiBoxGTVSettingsProviderOverlay
+com.android.networkstack                  # сеть
+com.android.networkstack.tethering
+com.android.networkstack.tethering.droidlogic
+com.google.android.networkstack.tethering.google
+com.android.connectivity.resources
+com.android.wifi.resources                # Wi-Fi
+com.android.wifi.dialog
+com.android.providers.media.module        # медиафайлы и флешки
+com.android.intentresolver                # окно «Открыть с помощью»
+com.dolby.android.audio.service           # звук Dolby
