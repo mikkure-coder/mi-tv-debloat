@@ -108,12 +108,22 @@ ensure_adb_connected() {
     # поэтому ниже дополнительно проверяем `adb devices`.
     adb connect "$TV_HOST:$TV_PORT" >/dev/null || true
 
-    # Небольшая пауза: ТВ иногда отвечает с задержкой.
-    sleep 1
-
-    # Проверяем, что устройство реально в состоянии `device`.
-    local state
-    state="$(adb -s "$TV_HOST:$TV_PORT" get-state 2>/dev/null || echo "missing")"
+    # Проверяем, что устройство реально в состоянии `device`. Ждём до 10 с:
+    # сразу после `adb connect` устройство может ещё не появиться в списке
+    # (на приставке 2026-10-25 через 1 с было «missing», хотя оно ждало
+    # подтверждения). Если ждёт подтверждения на экране — даём человеку
+    # до 60 с нажать OK.
+    local state="missing" i
+    for ((i = 0; i < 70; i++)); do
+        state="$(adb -s "$TV_HOST:$TV_PORT" get-state 2>/dev/null || echo "missing")"
+        [[ "$state" == "device" ]] && break
+        if [[ "$state" == "unauthorized" ]]; then
+            (( i == 10 )) && warn "Подтверди запрос «Разрешить отладку?» на экране (жду до минуты)..."
+        elif (( i >= 10 )); then
+            break
+        fi
+        sleep 1
+    done
 
     case "$state" in
         device)
