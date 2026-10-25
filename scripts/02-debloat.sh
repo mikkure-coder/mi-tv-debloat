@@ -125,6 +125,34 @@ while IFS= read -r raw_line || [[ -n "$raw_line" ]]; do
         fi
     fi
 
+    # --- Шаг B½. Мастер настройки (только по исключению устройства) --------
+    # До него дойдёт только на устройстве с core-exceptions.txt (см.
+    # lib/common.sh). Две проверки, обе на живом устройстве:
+    #   1) должен быть настоящий новый дом — не Google-лаунчер. Иначе после
+    #      отключения мастера дома не останется вовсе, кроме FallbackHome;
+    #   2) текущая сеть Wi-Fi не должна принадлежать мастеру: Android удаляет
+    #      сети отключённого приложения, а с Wi-Fi пропадёт и ADB. Если сеть
+    #      его — забудь её в Настройках и подключись заново, тогда владельцем
+    #      станет система.
+    if [[ "$pkg" == "com.google.android.tungsten.setupwraith" ]]; then
+        NEW_HOMES="$(echo "$HOME_PKGS" | grep -vxE 'com\.google\.android\.(apps\.tv\.launcherx|tvlauncher|leanbacklauncher)' || true)"
+        if [[ -z "$NEW_HOMES" ]]; then
+            warn "SKIP: $pkg — нет нового лаунчера, который станет домом."
+            warn "       Сначала $RUN_DIR/03-flauncher.sh."
+            cnt_skipped=$((cnt_skipped + 1))
+            continue
+        fi
+        WIFI_NOW="$(adb_shell dumpsys wifi | tr -d '\r' | grep 'mostRecentlyConnected=true' || true)"
+        if [[ -z "$WIFI_NOW" || "$WIFI_NOW" == *"cname=$pkg "* ]]; then
+            warn "SKIP: $pkg — текущая сеть Wi-Fi принадлежит мастеру (или это не удалось проверить)."
+            warn "       Настройки → Сеть и Интернет → твоя сеть → Забыть сеть, потом подключись заново"
+            warn "       и запусти этот скрипт снова."
+            cnt_skipped=$((cnt_skipped + 1))
+            continue
+        fi
+        log "Мастер настройки: новый дом есть ($(echo "$NEW_HOMES" | tr '\n' ' ')), сеть Wi-Fi не его."
+    fi
+
     # --- Шаг C. Собственно отключение ---------------------------------------
     if [[ "$DRY_RUN" == "1" ]]; then
         log "DRY: pm disable-user --user 0 $pkg"

@@ -195,13 +195,14 @@ fi
 # По опыту CleanYourTV (TROUBLESHOOTING, Xiaomi MOOR2 и др.) set-home-activity
 # может напечатать «Success» и ничего не поменять. Поэтому жмём Home так же,
 # как пультом (`input keyevent KEYCODE_HOME`), ждём и спрашиваем у системы,
-# какое приложение РЕАЛЬНО на экране (`dumpsys activity` → mResumedActivity).
+# какое приложение РЕАЛЬНО на экране (`dumpsys activity` → mResumedActivity;
+# на Android 14 строка называется «ResumedActivity:» — проверено на приставке).
 # Если там не новый лаунчер — штатный лаунчер НЕ отключать: он единственный дом.
 if [[ -n "$HOME_COMPONENT" ]]; then
     adb_shell input keyevent KEYCODE_HOME
     sleep 3
     ON_SCREEN="$(adb_shell dumpsys activity activities | tr -d '\r' \
-        | grep -m1 'mResumedActivity' || true)"
+        | grep -m1 -E 'mResumedActivity|ResumedActivity:' || true)"
     log "На экране после Home: ${ON_SCREEN:-<система не ответила>}"
     if [[ "$ON_SCREEN" == *"$NEW_PKG/"* ]]; then
         log "ОК: по кнопке Home открывается $NEW_PKG — проверено на деле."

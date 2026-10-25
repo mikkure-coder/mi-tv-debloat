@@ -85,7 +85,12 @@
    `debloat.txt` с `keep.txt` и встроенной `is_core_pkg` (ядро Android из
    CleanYourTV #884, `setupwraith`, `com.android.providers.*`). Совпадение —
    выход без единого отключения, переменной не обходится. Не ослаблять и не
-   добавлять «FORCE»-обход.
+   добавлять «FORCE»-обход. Единственное исключение (решение владельца
+   2026-10-25): `setupwraith` на устройстве, у которого есть
+   `packages/core-exceptions.txt` с этим именем, — сейчас только приставка.
+   Список исключаемых имён зашит в `CORE_EXCEPTIONABLE`, его не расширять без
+   отдельного решения владельца; 02 перед отключением мастера проверяет новый
+   дом и владельца сети Wi-Fi.
 3а. **Защита лаунчера.** `02-debloat.sh` обязан отказываться отключать
    `com.mitv.tvhome`, пока на ТВ не найден fallback-home (FLauncher,
    `com.google.android.tvlauncher` или `com.google.android.leanbacklauncher`).

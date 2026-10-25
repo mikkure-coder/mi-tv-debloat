@@ -122,7 +122,7 @@ run "am force-stop $PKG и нажать Home" \
 if [[ "$DRY_RUN" != "1" ]]; then
     sleep 3
     ON_SCREEN="$(adb_shell dumpsys activity activities | tr -d '\r' \
-        | grep -m1 'mResumedActivity' || true)"
+        | grep -m1 -E 'mResumedActivity|ResumedActivity:' || true)"
     if [[ "$ON_SCREEN" == *"$PKG/"* ]]; then
         log "ОК: лаунчер перезапущен и на экране."
     else

@@ -208,6 +208,23 @@ is_core_pkg() {
     return 1
 }
 
+# --- Узкое исключение: мастер настройки на приставке -------------------------
+# На приставке Xiaomi TV Box S 2 (Google TV) новый лаунчер становится домом,
+# только если отключить мастер первой настройки setupwraith (CleanYourTV и
+# наша проверка 2026-10-25). Решение владельца 2026-10-25: разрешить это
+# ТОЛЬКО для устройства, в папке которого есть packages/core-exceptions.txt
+# с этим именем. У телевизора такого файла нет — для него запрет прежний.
+# Исключить можно только имена из CORE_EXCEPTIONABLE; любое другое имя в
+# core-exceptions.txt игнорируется. Отключение мастера дополнительно
+# охраняет 02: сеть Wi-Fi не должна принадлежать ему, и должен быть новый дом.
+CORE_EXCEPTIONABLE="com.google.android.tungsten.setupwraith"
+CORE_EXCEPTIONS_FILE="$PKG_DIR/core-exceptions.txt"
+is_core_exception() {
+    [[ -f "$CORE_EXCEPTIONS_FILE" ]] || return 1
+    grep -qxF "$1" <<< "$CORE_EXCEPTIONABLE" || return 1
+    list_names "$CORE_EXCEPTIONS_FILE" | grep -qxF "$1"
+}
+
 # Второй аргумент (необязательный) — имя списка для сообщений; нужен, когда
 # список передан как <(…), у которого «имя файла» — /dev/fd/63.
 check_stoplist() {
@@ -222,6 +239,10 @@ check_stoplist() {
 
     while IFS= read -r pkg; do
         [[ -z "$pkg" ]] && continue
+        if is_core_exception "$pkg" && ! echo "$KEEP_NAMES" | grep -qxF "$pkg"; then
+            warn "Исключение для этого устройства: $pkg разрешён (core-exceptions.txt)."
+            continue
+        fi
         if is_core_pkg "$pkg" || echo "$KEEP_NAMES" | grep -qxF "$pkg"; then
             err "ЗАПРЕЩЕНО: $pkg есть в $list_name, но это ядро Android или стоп-лист."
             blocked=$((blocked + 1))
