@@ -12,6 +12,8 @@
 #      возвращает настройки из backup/appops-before.txt.
 #   1¾. Возвращает отдельные компоненты, отключённые 05-components.sh:
 #      состояния из backup/components-before.txt.
+#   1⅞. Возвращает системные настройки, изменённые 06-settings.sh:
+#      значения из backup/settings-before.txt.
 #   2. (Опционально) удаляет новый лаунчер с ТВ (FLauncher / CleanYourTV).
 #   3. Возвращает домашний экран, записанный в бэкапе (home-activity.txt).
 #
@@ -134,6 +136,31 @@ if [[ -f "$APPOPS_BEFORE" ]]; then
         adb_shell cmd appops write-settings >/dev/null 2>&1 \
             || warn "Не удалось сразу записать настройки фона на диск."
     fi
+fi
+
+# --- Шаг 1⅞. Возвращаем системные настройки (то, что делал 06) -------------
+# 06-settings.sh записал исходные значения в backup/settings-before.txt
+# («<раздел> <ключ> <значение>»). «null» значит, что ключа не было —
+# тогда удаляем его, и Android снова берёт значение по умолчанию.
+SET_BEFORE="$BACKUP_DIR/settings-before.txt"
+if [[ -f "$SET_BEFORE" ]]; then
+    log "---"
+    log "Возвращаю системные настройки из $SET_BEFORE"
+    while read -r ns key value; do
+        [[ -z "$ns" ]] && continue
+        if [[ "$value" == "null" ]]; then
+            cmd=(delete "$ns" "$key")
+        else
+            cmd=(put "$ns" "$key" "$value")
+        fi
+        if [[ "$DRY_RUN" == "1" ]]; then
+            log "DRY: settings ${cmd[*]}"
+        elif out="$(adb_shell settings "${cmd[@]}" 2>&1)"; then
+            log "SET: $ns $key → $value"
+        else
+            err "FAIL: $ns $key — $out"
+        fi
+    done < "$SET_BEFORE"
 fi
 
 # --- Шаг 1¾. Возвращаем отдельные компоненты (то, что делал 05) ------------

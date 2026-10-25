@@ -61,6 +61,11 @@ DRY_RUN=1 ./scripts/04-background.sh
 DRY_RUN=1 ./scripts/05-components.sh
 ./scripts/05-components.sh
 
+# 2⅞. Системные настройки (сейчас — анимации в 2 раза быстрее) —
+#      по списку packages/settings.txt, только разрешённые ключи
+DRY_RUN=1 ./scripts/06-settings.sh
+./scripts/06-settings.sh
+
 # 3. Установка лаунчера (APK из apks/, см. ниже) и назначение домашним экраном
 DRY_RUN=1 ./scripts/03-flauncher.sh
 ./scripts/03-flauncher.sh
