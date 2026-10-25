@@ -78,7 +78,11 @@ adb_shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c 
 # «страховочный» вариант, если что-то пойдёт не так с PatchWall.
 log "---"
 # apps.tv.launcherx — домашний экран Google TV (так на приставке TV Box S 2).
-if adb_shell pm list packages | tr -d '\r' | grep -qE 'com\.google\.android\.(tvlauncher|leanbacklauncher|apps\.tv\.launcherx)$'; then
+# Список сначала в переменную: `adb … | grep -q` под pipefail даёт ложное
+# «нет», когда grep выходит на первом совпадении и adb получает SIGPIPE
+# (так было на приставке 2026-10-25).
+ALL_PKGS="$(adb_shell pm list packages | tr -d '\r')"
+if grep -qE 'com\.google\.android\.(tvlauncher|leanbacklauncher|apps\.tv\.launcherx)$' <<< "$ALL_PKGS"; then
     log "ОК: на ТВ есть стандартный Android TV launcher (fallback)."
 else
     warn "На ТВ нет штатного Android TV launcher!"
