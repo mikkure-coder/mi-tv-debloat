@@ -65,6 +65,7 @@ com.google.android.tvrecommendations              # ленты рекоменд�
 com.google.android.leanbacklauncher.recommendations  # то же для старого лаунчера — CYT, не проверено
 com.google.android.videos                         # Play Фильмы — не проверено, держится ли
 com.google.android.play.games                     # Play Игры — не проверено, держится ли
+com.google.android.youtube.tvmusic                # YouTube Music — по выбору владельца 2026-10-25 (не открывал), не проверено, держится ли
 
 
 # ---- PATCHWALL как приложение ----------------------------------------------
