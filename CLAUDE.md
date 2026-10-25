@@ -107,12 +107,14 @@ scripts/05-components.sh — отключение отдельных компо�
                           исходные состояния → backup/components-before.txt
 scripts/06-settings.sh  — системные настройки по settings.txt, ТОЛЬКО ключи из ALLOWED;
                           исходные значения → backup/settings-before.txt
+scripts/07-theme.sh     — тема лаунчера CleanYourTV через его content-провайдер; --reset
 scripts/99-restore.sh   — pm enable всего отключённого; REMOVE_FLAUNCHER=1
 packages/debloat.txt    — что отключаем; группы от безопасных к рискованным,
                           каждая строка с комментарием «что это и чем грозит»
 packages/background.txt — кому запретить фон, НЕ отключая (иконка остаётся)
 packages/components.txt — «пакет/компонент»: какие части приложений отключить
 packages/settings.txt   — «раздел ключ значение» для 06 (сейчас анимации 0.5×)
+themes/glass-mitv/       — наша тема (glass из CYT + наши приложения в нижнем ряду)
 packages/keep.txt       — стоп-лист; 02 читает его и при совпадении не делает ничего
 ```
 

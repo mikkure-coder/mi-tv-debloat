@@ -78,6 +78,17 @@ DRY_RUN=1 ./scripts/03-flauncher.sh
 `packages/debloat.txt` через `02` — так и сделано у нас (2026-10-25).
 Вернуть: `./scripts/99-restore.sh`.
 
+### Тема лаунчера CleanYourTV
+
+```bash
+DRY_RUN=1 ./scripts/07-theme.sh       # показать, что будет сделано
+./scripts/07-theme.sh                 # тема themes/glass-mitv (вид как у Apple TV)
+./scripts/07-theme.sh --reset         # вернуть встроенный вид
+```
+
+Тема — файлы настроек и обои внутри данных самого лаунчера; систему не трогает.
+Порядок приложений в нижнем ряду — `dock_apps` в `themes/glass-mitv/config.json`.
+
 ### Лаунчер в стиле Apple TV (CleanYourTV): сборка из исходников
 
 Готового APK у проекта нет, собираем на ноутбуке. Проверено 2026-10-25 на

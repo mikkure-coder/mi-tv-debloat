@@ -15,6 +15,7 @@
 #   1⅞. Возвращает системные настройки, изменённые 06-settings.sh:
 #      значения из backup/settings-before.txt.
 #   2. (Опционально) удаляет новый лаунчер с ТВ (FLauncher / CleanYourTV).
+#   2½. Убирает тему лаунчера CleanYourTV (07-theme.sh --reset), если он остаётся.
 #   3. Возвращает домашний экран, записанный в бэкапе (home-activity.txt).
 #
 # Запуск:
@@ -219,6 +220,17 @@ if [[ "$REMOVE_LAUNCHER" == "1" ]]; then
             err "Не удалось удалить $L_PKG: $out"
         fi
     done
+fi
+
+# --- Шаг 2½. Убираем тему лаунчера CleanYourTV (то, что делал 07) ---------
+# Если лаунчер остаётся на ТВ — возвращаем ему встроенный вид через
+# 07-theme.sh --reset. Если его только что удалили (REMOVE_LAUNCHER=1),
+# тема ушла вместе с его данными.
+if [[ "$REMOVE_LAUNCHER" != "1" ]] && echo "$INSTALLED" | grep -qxF "com.gathin.tvhome"; then
+    log "---"
+    log "Убираю тему лаунчера CleanYourTV (07-theme.sh --reset)"
+    DRY_RUN="$DRY_RUN" TV_HOST="$TV_HOST" "$SCRIPTS_DIR/07-theme.sh" --reset \
+        || warn "Сброс темы не удался — вручную: ./scripts/07-theme.sh --reset"
 fi
 
 # --- Шаг 3. Возвращаем домашний экран, который был до нас -------------------
