@@ -23,9 +23,34 @@ LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPTS_DIR="$(cd "$LIB_DIR/.." && pwd)"
 ROOT_DIR="$(cd "$SCRIPTS_DIR/.." && pwd)"
 
+# DEVICE_DIR — папка устройства: в ней лежат его списки (packages/), бэкапы,
+# логи и файл с IP (.tv-host). По умолчанию это корень репозитория, то есть
+# телевизор Mi TV 4S. У приставки своя папка (mibox-s2/): её скрипты-обёртки
+# задают DEVICE_DIR сами, поэтому списки и бэкапы двух устройств не смешаются.
+# Общие файлы (apks/ с лаунчером, themes/) по-прежнему берутся из ROOT_DIR.
+DEVICE_DIR="${DEVICE_DIR:-$ROOT_DIR}"
+if [[ ! -d "$DEVICE_DIR/packages" ]]; then
+    echo "ERROR: в папке устройства '$DEVICE_DIR' нет packages/ — это не папка устройства." >&2
+    echo "       Запускай скрипты из scripts/ (телевизор) или из mibox-s2/scripts/ (приставка)." >&2
+    exit 2
+fi
+PKG_DIR="$DEVICE_DIR/packages"
+# Сам common.sh HOST_FILE не читает — его читают подключившие его скрипты.
+# shellcheck disable=SC2034
+HOST_FILE="$DEVICE_DIR/.tv-host"
+
+# RUN_DIR — откуда запускать скрипты этого устройства (путь от корня
+# репозитория). Его подставляют в подсказки вида «запусти …/99-restore.sh»,
+# чтобы для приставки не советовать команды телевизора.
+case "$DEVICE_DIR" in
+    "$ROOT_DIR")   RUN_DIR="./scripts" ;;
+    "$ROOT_DIR"/*) RUN_DIR="./${DEVICE_DIR#"$ROOT_DIR"/}/scripts" ;;
+    *)             RUN_DIR="$DEVICE_DIR/scripts" ;;   # папка вне репозитория
+esac
+
 # Каталоги для логов и бэкапов. Создаются «на лету», если их нет.
-LOG_DIR="$ROOT_DIR/logs"
-BACKUP_DIR="$ROOT_DIR/backup"
+LOG_DIR="$DEVICE_DIR/logs"
+BACKUP_DIR="$DEVICE_DIR/backup"
 mkdir -p "$LOG_DIR" "$BACKUP_DIR"
 
 # --- Параметры подключения к ТВ ---------------------------------------------
@@ -73,7 +98,7 @@ ensure_adb_connected() {
     require_cmd adb
 
     if [[ -z "$TV_HOST" ]]; then
-        err "Не задан IP телевизора. Запусти scripts/00-prepare.sh или"
+        err "Не задан IP телевизора. Запусти $RUN_DIR/00-prepare.sh или"
         err "передай переменную: TV_HOST=192.168.X.Y $0"
         exit 2
     fi
@@ -131,7 +156,7 @@ adb_cmd() {
 
 # --- Стоп-лист -----------------------------------------------------------------
 # Файл со списком пакетов, которые нельзя трогать никаким скриптом проекта.
-KEEP_FILE="$ROOT_DIR/packages/keep.txt"
+KEEP_FILE="$PKG_DIR/keep.txt"
 
 # list_names <файл> — имена пакетов из файла: без комментариев (всё после «#»)
 # и пустых строк, по одному на строку.
@@ -194,7 +219,7 @@ check_stoplist() {
     done < <(list_names "$list")
 
     if (( blocked > 0 )); then
-        err "Ничего не делаю. Убери эти строки из packages/$list_name"
+        err "Ничего не делаю. Убери эти строки из ${PKG_DIR#"$ROOT_DIR"/}/$list_name"
         err "(или закомментируй «#») и запусти скрипт снова."
         err "Почему так строго: отключение таких пакетов может оставить ТВ"
         err "не загружающимся — и вернуть его можно только сбросом или в сервисе."

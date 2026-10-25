@@ -30,8 +30,8 @@ source "$(dirname "$0")/lib/common.sh"
 log "=== Этап 7: тема лаунчера ==="
 
 # IP ТВ — из переменной окружения или из .tv-host.
-if [[ -z "$TV_HOST" && -f "$ROOT_DIR/.tv-host" ]]; then
-    TV_HOST="$(cat "$ROOT_DIR/.tv-host")"
+if [[ -z "$TV_HOST" && -f "$HOST_FILE" ]]; then
+    TV_HOST="$(cat "$HOST_FILE")"
 fi
 
 PKG="com.gathin.tvhome"
@@ -66,7 +66,7 @@ fi
 
 if ! adb_shell pm list packages | tr -d '\r' | grep -qxF "package:$PKG"; then
     err "Лаунчер $PKG не установлен — тему ставить некуда."
-    err "Сначала ./scripts/03-flauncher.sh с APK лаунчера CleanYourTV."
+    err "Сначала $RUN_DIR/03-flauncher.sh с APK лаунчера CleanYourTV."
     exit 2
 fi
 
@@ -127,9 +127,9 @@ if [[ "$DRY_RUN" != "1" ]]; then
         log "ОК: лаунчер перезапущен и на экране."
     else
         warn "После перезапуска на экране не лаунчер: ${ON_SCREEN:-<нет ответа>}"
-        warn "Нажми Home на пульте. Если что-то не так — ./scripts/07-theme.sh --reset"
+        warn "Нажми Home на пульте. Если что-то не так — $RUN_DIR/07-theme.sh --reset"
     fi
 fi
 
 log "---"
-log "Готово. Откат: ./scripts/07-theme.sh --reset"
+log "Готово. Откат: $RUN_DIR/07-theme.sh --reset"

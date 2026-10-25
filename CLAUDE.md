@@ -70,6 +70,13 @@
    `adb_cmd` из `lib/common.sh` — они подставляют `-s "$TV_HOST:$TV_PORT"`.
    Голый `adb shell` ломается, когда к ноуту подключён ещё и телефон
    («more than one device»).
+2а. **Папка устройства.** Всё, что своё у устройства, скрипты берут только
+   через переменные из `lib/common.sh`: `PKG_DIR` (списки), `HOST_FILE`
+   (`.tv-host`), `BACKUP_DIR`, `LOG_DIR`. Их корень — `DEVICE_DIR`: по
+   умолчанию корень репозитория (телевизор), у приставки — `mibox-s2/`
+   (задают её обёртки). Не писать `$ROOT_DIR/packages` и `$ROOT_DIR/.tv-host`
+   напрямую — иначе приставка прочитает списки телевизора. Через `ROOT_DIR`
+   идут только общие `apks/` и `themes/`.
 3. **Стоп-лист.** `02-debloat.sh` до подключения к ТВ сверяет весь
    `debloat.txt` с `keep.txt` и встроенной `is_core_pkg` (ядро Android из
    CleanYourTV #884, `setupwraith`, `com.android.providers.*`). Совпадение —

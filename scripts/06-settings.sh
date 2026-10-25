@@ -25,11 +25,11 @@ source "$(dirname "$0")/lib/common.sh"
 log "=== Этап 6: системные настройки ==="
 
 # IP ТВ — из переменной окружения или из .tv-host.
-if [[ -z "$TV_HOST" && -f "$ROOT_DIR/.tv-host" ]]; then
-    TV_HOST="$(cat "$ROOT_DIR/.tv-host")"
+if [[ -z "$TV_HOST" && -f "$HOST_FILE" ]]; then
+    TV_HOST="$(cat "$HOST_FILE")"
 fi
 
-SET_FILE="$ROOT_DIR/packages/settings.txt"
+SET_FILE="$PKG_DIR/settings.txt"
 # Исходные значения до нашего вмешательства — основа отката в 99.
 SET_BEFORE="$BACKUP_DIR/settings-before.txt"
 
@@ -105,4 +105,4 @@ log "---"
 log "Итого:"
 log "  изменено:  $cnt_done"
 log "  ошибок:    $cnt_errors"
-log "Если что-то не так — ./scripts/99-restore.sh"
+log "Если что-то не так — $RUN_DIR/99-restore.sh"

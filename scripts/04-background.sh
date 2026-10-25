@@ -30,11 +30,11 @@ source "$(dirname "$0")/lib/common.sh"
 log "=== Этап 4: запрет работы в фоне ==="
 
 # IP ТВ — из переменной окружения или из .tv-host.
-if [[ -z "$TV_HOST" && -f "$ROOT_DIR/.tv-host" ]]; then
-    TV_HOST="$(cat "$ROOT_DIR/.tv-host")"
+if [[ -z "$TV_HOST" && -f "$HOST_FILE" ]]; then
+    TV_HOST="$(cat "$HOST_FILE")"
 fi
 
-BG_FILE="$ROOT_DIR/packages/background.txt"
+BG_FILE="$PKG_DIR/background.txt"
 # Исходные настройки до нашего вмешательства — основа отката в 99.
 APPOPS_BEFORE="$BACKUP_DIR/appops-before.txt"
 OP="RUN_ANY_IN_BACKGROUND"
@@ -132,4 +132,4 @@ log "  пропущено:  $cnt_skipped"
 log "  ошибок:     $cnt_errors"
 log "---"
 log "Уже запущенные процессы доживут до выгрузки — перезагрузи ТВ."
-log "Если приложение перестало нормально работать — ./scripts/99-restore.sh"
+log "Если приложение перестало нормально работать — $RUN_DIR/99-restore.sh"

@@ -32,11 +32,11 @@ source "$(dirname "$0")/lib/common.sh"
 log "=== Этап 5: отключение отдельных компонентов ==="
 
 # IP ТВ — из переменной окружения или из .tv-host.
-if [[ -z "$TV_HOST" && -f "$ROOT_DIR/.tv-host" ]]; then
-    TV_HOST="$(cat "$ROOT_DIR/.tv-host")"
+if [[ -z "$TV_HOST" && -f "$HOST_FILE" ]]; then
+    TV_HOST="$(cat "$HOST_FILE")"
 fi
 
-COMP_FILE="$ROOT_DIR/packages/components.txt"
+COMP_FILE="$PKG_DIR/components.txt"
 # Исходные состояния до нашего вмешательства — основа отката в 99.
 COMP_BEFORE="$BACKUP_DIR/components-before.txt"
 
@@ -132,4 +132,4 @@ log "  пропущено:  $cnt_skipped"
 log "  ошибок:     $cnt_errors"
 log "---"
 log "Проверка: перезагрузи ТВ и посмотри, стартует ли приложение само."
-log "Если приложение перестало нормально работать — ./scripts/99-restore.sh"
+log "Если приложение перестало нормально работать — $RUN_DIR/99-restore.sh"

@@ -35,8 +35,8 @@ source "$(dirname "$0")/lib/common.sh"
 log "=== Этап 3: установка лаунчера ==="
 
 # IP ТВ — из переменной или .tv-host
-if [[ -z "$TV_HOST" && -f "$ROOT_DIR/.tv-host" ]]; then
-    TV_HOST="$(cat "$ROOT_DIR/.tv-host")"
+if [[ -z "$TV_HOST" && -f "$HOST_FILE" ]]; then
+    TV_HOST="$(cat "$HOST_FILE")"
 fi
 
 ensure_adb_connected
@@ -128,7 +128,7 @@ if [[ -z "$APK" || ! -f "$APK" ]]; then
     err "     либо релизы: https://gitlab.com/flauncher/flauncher/-/releases"
     err "  2. Скачай последний APK."
     err "  3. Положи его в каталог: $APK_DIR"
-    err "  4. Снова запусти: ./scripts/03-flauncher.sh"
+    err "  4. Снова запусти: $RUN_DIR/03-flauncher.sh"
     exit 2
 fi
 

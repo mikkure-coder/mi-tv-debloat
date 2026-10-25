@@ -34,12 +34,12 @@ source "$(dirname "$0")/lib/common.sh"
 log "=== Этап 2: деблоат ==="
 
 # IP ТВ — из переменной окружения или из .tv-host.
-if [[ -z "$TV_HOST" && -f "$ROOT_DIR/.tv-host" ]]; then
-    TV_HOST="$(cat "$ROOT_DIR/.tv-host")"
+if [[ -z "$TV_HOST" && -f "$HOST_FILE" ]]; then
+    TV_HOST="$(cat "$HOST_FILE")"
 fi
 
 # Файл со списком «мусора». Это тот самый, который редактирует пользователь.
-DEBLOAT_FILE="$ROOT_DIR/packages/debloat.txt"
+DEBLOAT_FILE="$PKG_DIR/debloat.txt"
 
 if [[ ! -f "$DEBLOAT_FILE" ]]; then
     err "Нет файла $DEBLOAT_FILE — нечего отключать."
@@ -154,4 +154,4 @@ adb_shell cmd package resolve-activity --brief \
 
 log "---"
 log "Готово. Проверь ТВ: нажми Home на пульте, перезагрузи через 'Настройки → Перезагрузка'."
-log "Если что-то отвалилось — запусти ./scripts/99-restore.sh"
+log "Если что-то отвалилось — запусти $RUN_DIR/99-restore.sh"

@@ -24,10 +24,9 @@ log "=== Этап 0: подготовка ==="
 require_cmd adb
 
 # --- Шаг 2. Запрашиваем IP телевизора, если он не задан ----------------------
-# Файл .tv-host в корне проекта — память между запусками: один раз ввёл IP,
-# дальше все скрипты (01-backup, 02-debloat, 03-flauncher, 99-restore)
-# берут его оттуда автоматически.
-HOST_FILE="$ROOT_DIR/.tv-host"
+# Файл .tv-host в папке устройства (HOST_FILE из lib/common.sh) — память
+# между запусками: один раз ввёл IP, дальше все скрипты (01-backup,
+# 02-debloat, 03-flauncher, 99-restore) берут его оттуда автоматически.
 
 if [[ -z "$TV_HOST" && -f "$HOST_FILE" ]]; then
     TV_HOST="$(cat "$HOST_FILE")"

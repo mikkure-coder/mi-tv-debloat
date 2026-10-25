@@ -32,8 +32,8 @@ source "$(dirname "$0")/lib/common.sh"
 log "=== Откат деблоата ==="
 
 # IP ТВ — из переменной или из .tv-host.
-if [[ -z "$TV_HOST" && -f "$ROOT_DIR/.tv-host" ]]; then
-    TV_HOST="$(cat "$ROOT_DIR/.tv-host")"
+if [[ -z "$TV_HOST" && -f "$HOST_FILE" ]]; then
+    TV_HOST="$(cat "$HOST_FILE")"
 fi
 
 ensure_adb_connected
@@ -230,7 +230,7 @@ if [[ "$REMOVE_LAUNCHER" != "1" ]] && echo "$INSTALLED" | grep -qxF "com.gathin.
     log "---"
     log "Убираю тему лаунчера CleanYourTV (07-theme.sh --reset)"
     DRY_RUN="$DRY_RUN" TV_HOST="$TV_HOST" "$SCRIPTS_DIR/07-theme.sh" --reset \
-        || warn "Сброс темы не удался — вручную: ./scripts/07-theme.sh --reset"
+        || warn "Сброс темы не удался — вручную: $RUN_DIR/07-theme.sh --reset"
 fi
 
 # --- Шаг 3. Возвращаем домашний экран, который был до нас -------------------

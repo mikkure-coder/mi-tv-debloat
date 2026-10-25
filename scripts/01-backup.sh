@@ -24,8 +24,8 @@ source "$(dirname "$0")/lib/common.sh"
 log "=== Этап 1: бэкап текущего состояния ==="
 
 # Если IP не задан явно, подхватим из .tv-host, который записал 00-prepare.sh.
-if [[ -z "$TV_HOST" && -f "$ROOT_DIR/.tv-host" ]]; then
-    TV_HOST="$(cat "$ROOT_DIR/.tv-host")"
+if [[ -z "$TV_HOST" && -f "$HOST_FILE" ]]; then
+    TV_HOST="$(cat "$HOST_FILE")"
 fi
 
 ensure_adb_connected
