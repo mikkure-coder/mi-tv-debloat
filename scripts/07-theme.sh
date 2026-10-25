@@ -17,7 +17,7 @@
 # возможностей лаунчера, которую мы не включали.
 #
 # Запуск:
-#   ./scripts/07-theme.sh                    # тема themes/glass-mitv
+#   ./scripts/07-theme.sh                    # тема устройства (theme/) или themes/glass-mitv
 #   ./scripts/07-theme.sh themes/<папка>     # другая тема
 #   ./scripts/07-theme.sh --reset            # убрать тему, вернуть встроенный вид
 #   DRY_RUN=1 ./scripts/07-theme.sh          # ничего не меняет, только печатает
@@ -37,7 +37,14 @@ fi
 PKG="com.gathin.tvhome"
 URI="content://$PKG.theme"
 TMP="/data/local/tmp/mitv-theme"
-ARG="${1:-$ROOT_DIR/themes/glass-mitv}"
+# Тема по умолчанию: своя у устройства (папка theme/ в папке устройства —
+# так у приставки), иначе общая тема телевизора themes/glass-mitv.
+if [[ -f "$DEVICE_DIR/theme/config.json" ]]; then
+    DEFAULT_THEME="$DEVICE_DIR/theme"
+else
+    DEFAULT_THEME="$ROOT_DIR/themes/glass-mitv"
+fi
+ARG="${1:-$DEFAULT_THEME}"
 
 RESET=0
 if [[ "$ARG" == "--reset" ]]; then
@@ -64,7 +71,10 @@ if [[ "$DRY_RUN" == "1" ]]; then
     warn "DRY_RUN=1 — только печатаю команды, НИЧЕГО не меняю."
 fi
 
-if ! adb_shell pm list packages | tr -d '\r' | grep -qxF "package:$PKG"; then
+# Список в переменную: `adb … | grep -q` под pipefail даёт ложное «нет»
+# (SIGPIPE, см. 00-prepare.sh).
+ALL_PKGS="$(adb_shell pm list packages | tr -d '\r')"
+if ! grep -qxF "package:$PKG" <<< "$ALL_PKGS"; then
     err "Лаунчер $PKG не установлен — тему ставить некуда."
     err "Сначала $RUN_DIR/03-flauncher.sh с APK лаунчера CleanYourTV."
     exit 2
