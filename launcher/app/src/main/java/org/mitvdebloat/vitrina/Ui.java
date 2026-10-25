@@ -13,7 +13,7 @@ import android.widget.TextView;
 final class Ui {
     private Ui() {}
 
-    static final float FONT = 1.25f;
+    static final float FONT = 1.45f;
 
     static final Typeface REGULAR = Typeface.create("sans-serif", Typeface.NORMAL);
     static final Typeface MEDIUM = Typeface.create("sans-serif-medium", Typeface.NORMAL);
@@ -30,7 +30,7 @@ final class Ui {
 
     static TextView text(Context c, float sp, int colorRes, Typeface tf) {
         TextView t = new TextView(c);
-        // Все размеры текста крупнее на четверть: на ТВ смотрят с дивана (просьба владельца).
+        // Все размеры текста крупнее в 1,45 раза: на ТВ смотрят с дивана (просьба владельца).
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp * FONT);
         t.setTextColor(c.getColor(colorRes));
         t.setTypeface(tf);

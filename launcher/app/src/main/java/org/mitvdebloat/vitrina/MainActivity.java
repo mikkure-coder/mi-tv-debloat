@@ -97,14 +97,14 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         canvas.setOrientation(LinearLayout.VERTICAL);
         canvas.setClipChildren(false);
         canvas.setClipToPadding(false);
-        canvas.setPadding(dp(SIDE), dp(26), dp(SIDE), 0);
+        canvas.setPadding(dp(SIDE), dp(20), dp(SIDE), 0);
         root.addView(canvas, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1100)));
 
         page1 = new LinearLayout(this);
         page1.setOrientation(LinearLayout.VERTICAL);
         page1.setClipChildren(false);
         page1.setClipToPadding(false);
-        page1.addView(header(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(90)));
+        page1.addView(header(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(104)));
         shelf = new ShelfScroll(this);
         shelf.setHorizontalScrollBarEnabled(false);
         shelf.setClipChildren(false);
@@ -116,7 +116,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         row.setClipToPadding(false);
         row.setPadding(0, dp(8), dp(SIDE + 400), 0);
         shelf.addView(row, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(IMG_H + 64));
+        LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(IMG_H + 78));
         sl.topMargin = dp(8);
         sl.leftMargin = -dp(SIDE);  // полка уходит за левый край, как в видео при прокрутке
         sl.rightMargin = -dp(SIDE);
@@ -131,7 +131,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
 
         page2 = page2();
         LinearLayout.LayoutParams pl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        pl.topMargin = dp(24);
+        pl.topMargin = dp(20);
         canvas.addView(page2, pl);
 
         setContentView(root);
@@ -306,7 +306,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
             LinearLayout r = (LinearLayout) g.getChildAt(1);
             for (TvInputInfo info : ins) {
                 CharSequence label = info.loadLabel(this);
-                LinearLayout pill = Bits.pill(this, getDrawable(info.getType() == TvInputInfo.TYPE_TUNER ? R.drawable.ic_tv : R.drawable.ic_input), label, dp(96), dp(68));
+                LinearLayout pill = Bits.pill(this, getDrawable(info.getType() == TvInputInfo.TYPE_TUNER ? R.drawable.ic_tv : R.drawable.ic_input), label, dp(112), dp(78));
                 pill.setOnClickListener(v -> open(new Intent(Intent.ACTION_VIEW, TvContract.buildChannelUriForPassthroughInput(info.getId()))));
                 addPill(r, pill);
             }
@@ -314,16 +314,16 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         }
         LinearLayout g = group("Ярлыки");
         LinearLayout r = (LinearLayout) g.getChildAt(1);
-        LinearLayout all = Bits.pill(this, getDrawable(R.drawable.ic_apps), "Все приложения", dp(118), dp(68));
+        LinearLayout all = Bits.pill(this, getDrawable(R.drawable.ic_apps), "Все приложения", dp(140), dp(78));
         all.setOnClickListener(v -> startActivity(new Intent(this, AppsActivity.class)));
         addPill(r, all);
-        LinearLayout set = Bits.pill(this, getDrawable(R.drawable.ic_settings), "Настройки", dp(118), dp(68));
+        LinearLayout set = Bits.pill(this, getDrawable(R.drawable.ic_settings), "Настройки", dp(140), dp(78));
         set.setOnClickListener(v -> open(new Intent(Settings.ACTION_SETTINGS)));
         addPill(r, set);
-        LinearLayout wifi = Bits.pill(this, getDrawable(R.drawable.ic_wifi), "Wi-Fi", dp(118), dp(68));
+        LinearLayout wifi = Bits.pill(this, getDrawable(R.drawable.ic_wifi), "Wi-Fi", dp(140), dp(78));
         wifi.setOnClickListener(v -> open(new Intent(Settings.ACTION_WIFI_SETTINGS)));
         addPill(r, wifi);
-        LinearLayout bt = Bits.pill(this, getDrawable(R.drawable.ic_bluetooth), "Bluetooth", dp(118), dp(68));
+        LinearLayout bt = Bits.pill(this, getDrawable(R.drawable.ic_bluetooth), "Bluetooth", dp(140), dp(78));
         bt.setOnClickListener(v -> open(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS)));
         addPill(r, bt);
         LinearLayout.LayoutParams gl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -339,13 +339,13 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         TextView wait = Ui.text(this, 10, R.color.text3, Ui.REGULAR);
         wait.setText("Загружаю погоду…");
         weatherBox.addView(wait);
-        LinearLayout.LayoutParams wl = new LinearLayout.LayoutParams(0, dp(212), 1.45f);
-        LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(0, dp(212), 1f);
+        LinearLayout.LayoutParams wl = new LinearLayout.LayoutParams(0, dp(226), 1.45f);
+        LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(0, dp(226), 1f);
         rl.leftMargin = dp(16);
         cards.addView(weatherBox, wl);
         cards.addView(ratesBox, rl);
         LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        cl.topMargin = dp(18);
+        cl.topMargin = dp(14);
         p.addView(cards, cl);
         return p;
     }
@@ -505,7 +505,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         now.addView(tr);
         TextView desc = Ui.text(this, 10.5f, R.color.text, Ui.MEDIUM);
         desc.setText(Weather.describe(d.code));
-        LinearLayout.LayoutParams dl = new LinearLayout.LayoutParams(dp(190), ViewGroup.LayoutParams.WRAP_CONTENT);
+        LinearLayout.LayoutParams dl = new LinearLayout.LayoutParams(dp(215), ViewGroup.LayoutParams.WRAP_CONTENT);
         dl.topMargin = dp(6);
         now.addView(desc, dl);
         TextView mm = Ui.text(this, 9.5f, R.color.text2, Ui.REGULAR);
@@ -513,7 +513,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         LinearLayout.LayoutParams ml = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         ml.topMargin = dp(3);
         now.addView(mm, ml);
-        body.addView(now, new LinearLayout.LayoutParams(dp(190), ViewGroup.LayoutParams.WRAP_CONTENT));
+        body.addView(now, new LinearLayout.LayoutParams(dp(215), ViewGroup.LayoutParams.WRAP_CONTENT));
 
         LinearLayout hours = new LinearLayout(this);
         for (Weather.Hour h : d.hours) {
@@ -576,7 +576,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
             ch.setGravity(Gravity.CENTER);
             ch.setBackground(Ui.round(dir > 0 ? getColor(R.color.up_bg) : dir < 0 ? getColor(R.color.down_bg) : 0x14000000, dp(7)));
             ch.setPadding(dp(5), dp(2), dp(5), dp(2));
-            LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(dp(58), ViewGroup.LayoutParams.WRAP_CONTENT);
+            LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(dp(66), ViewGroup.LayoutParams.WRAP_CONTENT);
             cl.leftMargin = dp(10);
             line.addView(ch, cl);
             LinearLayout.LayoutParams ll = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
@@ -595,7 +595,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
     private void shift(boolean down) {
         if (down == shifted) return;
         shifted = down;
-        float dy = down ? -(dockPanel.getTop() - dp(22)) : 0;
+        float dy = down ? -(dockPanel.getTop() - dp(16)) : 0;
         canvas.animate().translationY(dy).setDuration(380).setInterpolator(new android.view.animation.DecelerateInterpolator(1.6f)).start();
         page1.animate().alpha(down ? 0f : 1f).setDuration(260).start();
         page2.animate().alpha(down ? 1f : 0f).setDuration(down ? 380 : 200).start();
