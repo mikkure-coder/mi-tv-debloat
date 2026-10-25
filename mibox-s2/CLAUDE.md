@@ -148,6 +148,27 @@ BetaWiki называет UKG3.250107.001 бетой с типом `userdebug` �
   одной строкой. Снимки обеих страниц в порядке, фокус с ряда вверх идёт на
   кнопки шапки. В настройках лаунчера на приставке остался ключ `demo` —
   его никто не читает.
+- 23:35, по просьбе владельца: тёмная тема (кнопка в шапке: Авто / Светлая /
+  Тёмная; «Авто» — тёмная с 19:00 до 9:00). Ярлык Bluetooth не открывался:
+  на приставке у `ACTION_BLUETOOTH_SETTINGS` нет обработчика. «Пульты и
+  аксессуары» здесь — срез настроек: `android.settings.SLICE_SETTINGS` с
+  `--es slice_uri content://com.android.tv.settings.accessories.sliceprovider/general`
+  (имя параметра и адрес взяты из APK настроек, `SliceActivity.getSliceUri`).
+  Но `SliceActivity` закрыта правом `WRITE_SECURE_SETTINGS` — Permission
+  Denial в журнале, ярлык показал «Не открывается». Тёмную тему владелец
+  проверил: «всё ок».
+- 23:45, решение владельца: ярлык «Аксессуары» открывает
+  `com.google.android.intent.action.CONNECT_INPUT` →
+  `accessories.AddAccessoryActivity` («Подключить пульт или аксессуар»),
+  ей нужно `BLUETOOTH_CONNECT` («Устройства поблизости»): в манифесте,
+  `08` выдаёт `pm grant`, без права лаунчер спрашивает системным окном.
+  `WRITE_SECURE_SETTINGS` лаунчеру не давать. Ставлено вручную (`08` в
+  конце делает `am start` и выкинул бы владельца из Okko).
+  Владелец: «идёт сразу поиск» — поэтому своё меню «Пульты и аксессуары»:
+  сопряжённые устройства из `getBondedDevices()` (на приставке 4: телефон,
+  двое наушников, пульт Xiaomi RC), OK → `accessories.BluetoothAccessoryActivity`
+  с `accessory_address`/`accessory_name` (exported, то же `BLUETOOTH_CONNECT`;
+  имена параметров — из APK настроек), последний пункт «Подключить новое».
 
 ## 6. Очередь
 

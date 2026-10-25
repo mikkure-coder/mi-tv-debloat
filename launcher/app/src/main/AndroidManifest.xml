@@ -4,6 +4,9 @@
     <!-- Погода (met.no), курсы (ЦБ РФ, CoinGecko). Больше никуда. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- «Устройства поблизости»: без него система не открывает экран
+         «Подключить пульт или аксессуар» (решение владельца 2026-10-25). -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
@@ -17,6 +20,10 @@
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <!-- «Подключить пульт или аксессуар» на Google TV (см. MainActivity.openAccessories). -->
+        <intent>
+            <action android:name="com.google.android.intent.action.CONNECT_INPUT" />
         </intent>
     </queries>
 

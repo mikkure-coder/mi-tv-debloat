@@ -13,6 +13,8 @@
 #      лежит в папке устройства и в git НЕ попадает (см. .gitignore):
 #        vitrina.json — {"dock": [...], "city": "Москва", "lat": 55.75, "lon": 37.62}
 #                       (пример — launcher/vitrina.example.json).
+#      Выдаёт право «Устройства поблизости» (BLUETOOTH_CONNECT) для ярлыка
+#      «Аксессуары» — решение владельца 2026-10-25.
 #   3. Только с SET_HOME=1 — делает «Витрину» домашним экраном и проверяет
 #      нажатием Home, что открылась она. Прежний лаунчер остаётся установленным.
 #
@@ -80,6 +82,16 @@ if ! out="$(adb_cmd install -r "$APK" 2>&1)"; then
     exit 3
 fi
 log "Установлено: $(echo "$out" | tail -n 1)"
+
+# «Устройства поблизости» — для ярлыка «Аксессуары» (экран сопряжения пульта).
+# Право есть только с Android 12 (SDK 31); на старых ТВ шаг не нужен.
+if (( $(adb_shell getprop ro.build.version.sdk | tr -d '\r') >= 31 )); then
+    if adb_shell pm grant "$PKG" android.permission.BLUETOOTH_CONNECT >/dev/null 2>&1; then
+        log "Право «Устройства поблизости» выдано."
+    else
+        warn "Право «Устройства поблизости» не выдалось — лаунчер попросит его сам при первом нажатии «Аксессуары»."
+    fi
+fi
 
 # Приёмник настроек закрыт правом DUMP: слать их может только adb shell.
 res="$(adb_shell am broadcast -n "$PKG/.ConfigReceiver" -a "$PKG.CONFIG" --es b64 "$B64" | tr -d '\r' | grep -o 'data="[^"]*"' || true)"

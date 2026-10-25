@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Тёмная тема: включается кнопкой в шапке или сама с 19:00 до 9:00. -->
+    <color name="bg_top">#FF1A1D24</color>
+    <color name="bg_bottom">#FF0A0B0F</color>
+    <color name="text">#FFF5F5F7</color>
+    <color name="text2">#FFD2D4DB</color>
+    <color name="text3">#FFA3A7B1</color>
+    <color name="glass">#8C2B2F39</color>
+    <color name="glass_edge">#26FFFFFF</color>
+    <color name="card">#B3222630</color>
+    <color name="up">#FF4CCB7A</color>
+    <color name="down">#FFFF7A72</color>
+    <color name="up_bg">#2E34C26A</color>
+    <color name="down_bg">#33E5484D</color>
+    <color name="control">#B8323744</color>
+    <color name="edge">#1FFFFFFF</color>
+    <color name="focus">#FF4A505E</color>
+    <color name="icon">#FFE4E6EC</color>
+    <color name="divider">#26FFFFFF</color>
+    <color name="chip">#1FFFFFFF</color>
+    <color name="dialog">#F7262A33</color>
+    <color name="sel">#FFF2F2F5</color>
+    <color name="sel_text">#FF111114</color>
+    <color name="shadow_spot">#99000000</color>
+    <color name="shadow_ambient">#66000000</color>
+</resources>

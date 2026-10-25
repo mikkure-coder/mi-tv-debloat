@@ -19,6 +19,12 @@ final class Config {
     static final String CITY = "city";
     static final String LAT = "lat";
     static final String LON = "lon";
+    static final String THEME = "theme";
+
+    /** Тема: сама по часам, всегда светлая или всегда тёмная. */
+    static final String AUTO = "auto", LIGHT = "light", DARK = "dark";
+    /** В режиме «сама» тёмная с 19:00 до 9:00 (просьба владельца). */
+    static final int DARK_FROM = 19, DARK_TO = 9;
 
     /** Ряд по умолчанию: приложения, которые есть и на ТВ, и на приставке. */
     static final List<String> DEFAULT_DOCK = Arrays.asList(
@@ -43,5 +49,16 @@ final class Config {
 
     static String city(Context c) { return prefs(c).getString(CITY, "Москва"); }
     static double lat(Context c) { return Double.longBitsToDouble(prefs(c).getLong(LAT, Double.doubleToLongBits(55.7558))); }
+    static String theme(Context c) { return prefs(c).getString(THEME, AUTO); }
+    static void setTheme(Context c, String t) { prefs(c).edit().putString(THEME, t).apply(); }
+
+    static boolean dark(Context c) {
+        String t = theme(c);
+        if (DARK.equals(t)) return true;
+        if (LIGHT.equals(t)) return false;
+        int h = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
+        return h >= DARK_FROM || h < DARK_TO;
+    }
+
     static double lon(Context c) { return Double.longBitsToDouble(prefs(c).getLong(LON, Double.doubleToLongBits(37.6173))); }
 }

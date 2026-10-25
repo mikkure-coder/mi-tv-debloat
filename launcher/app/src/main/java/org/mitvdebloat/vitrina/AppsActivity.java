@@ -1,6 +1,7 @@
 package org.mitvdebloat.vitrina;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -23,6 +24,11 @@ public class AppsActivity extends Activity {
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
         build();
+    }
+
+    @Override protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        applyOverrideConfiguration(Ui.nightOverride(Config.dark(base)));
     }
 
     private int dp(float v) { return Ui.dp(this, v); }

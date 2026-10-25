@@ -13,4 +13,16 @@
     <color name="down">#FFB3261E</color>
     <color name="up_bg">#2234C26A</color>
     <color name="down_bg">#22E5484D</color>
+    <!-- Кнопки, ярлыки, рамки, фокус, меню. -->
+    <color name="control">#B8FFFFFF</color>
+    <color name="edge">#E6FFFFFF</color>
+    <color name="focus">#FFFFFFFF</color>
+    <color name="icon">#FF3A3A3C</color>
+    <color name="divider">#1A000000</color>
+    <color name="chip">#14000000</color>
+    <color name="dialog">#F7FFFFFF</color>
+    <color name="sel">#FF1D1D1F</color>
+    <color name="sel_text">#FFFFFFFF</color>
+    <color name="shadow_spot">#55303A4A</color>
+    <color name="shadow_ambient">#33303A4A</color>
 </resources>

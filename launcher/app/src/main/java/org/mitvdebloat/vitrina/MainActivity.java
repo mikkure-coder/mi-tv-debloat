@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.media.tv.TvContract;
 import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
@@ -41,6 +40,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
 
     // Сетка экрана 960×540 dp (приставка и ТВ: 1920×1080 при плотности 320).
     private static final int SIDE = 48, WEATHER_H = 292;
+    private static final int REQ_BT = 1;
     private static final int TILE_W = 104, TILE_H = 58, TILE_GAP = 14;
 
     private LinearLayout canvas, dockRow, page1;
@@ -48,13 +48,25 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
     private TextView clockText, dateText, ticker;
     private ImageView wifiBtn;
     private LinearLayout weatherBox, ratesBox;
-    private boolean shifted;
+    private boolean shifted, dark;
     private long loadedAt;
+    private ConnectivityManager.NetworkCallback netCb;
     private List<Apps.App> apps = new ArrayList<>();
     private List<Rates.Rate> lastRates = new ArrayList<>();
     private final Runnable clock = new Runnable() {
-        @Override public void run() { updateTicker(); Net.MAIN.postDelayed(this, 20_000); }
+        @Override public void run() {
+            if (Config.dark(MainActivity.this) != dark) { recreate(); return; }  // 19:00 и 9:00 в режиме «Авто»
+            updateTicker();
+            Net.MAIN.postDelayed(this, 20_000);
+        }
     };
+
+    @Override protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        // Тему выбираем сами, а не по системе: на ТВ системной тёмной темы нет.
+        dark = Config.dark(base);
+        applyOverrideConfiguration(Ui.nightOverride(dark));
+    }
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -75,8 +87,17 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         Net.MAIN.removeCallbacks(clock);
     }
 
+    @Override protected void onDestroy() {
+        // После recreate() старый экран не должен получать ни настроек, ни событий сети.
+        Config.prefs(this).unregisterOnSharedPreferenceChangeListener(this);
+        ConnectivityManager cm = getSystemService(ConnectivityManager.class);
+        if (cm != null && netCb != null) cm.unregisterNetworkCallback(netCb);
+        super.onDestroy();
+    }
+
     @Override public void onSharedPreferenceChanged(SharedPreferences p, String key) {
-        if (Config.DOCK.equals(key)) refreshDock();
+        if (Config.THEME.equals(key)) { if (Config.dark(this) != dark) recreate(); }
+        else if (Config.DOCK.equals(key)) refreshDock();
         else { loadedAt = 0; loadData(); }
     }
 
@@ -155,6 +176,8 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         int s = dp(34);
         wifiBtn = Bits.roundButton(this, R.drawable.ic_wifi, s);
         wifiBtn.setOnClickListener(v -> open(new Intent(Settings.ACTION_WIFI_SETTINGS)));
+        ImageView theme = Bits.roundButton(this, R.drawable.ic_theme, s);
+        theme.setOnClickListener(v -> themeMenu());
         ImageView gear = Bits.roundButton(this, R.drawable.ic_settings, s);
         gear.setOnClickListener(v -> open(new Intent(Settings.ACTION_SETTINGS)));
         LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(s, s);
@@ -165,6 +188,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
             inp.setOnClickListener(v -> { shift(true); page2.post(() -> page2.findFocus()); focusFirst(page2); });
             btns.addView(inp, new LinearLayout.LayoutParams(bl));
         }
+        btns.addView(theme, new LinearLayout.LayoutParams(bl));
         btns.addView(gear, new LinearLayout.LayoutParams(bl));
         right.addView(btns);
         ticker = Ui.text(this, 9.5f, R.color.text3, Ui.REGULAR);
@@ -173,6 +197,14 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         right.addView(ticker, kl);
         h.addView(right, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.END | Gravity.TOP));
         return h;
+    }
+
+    private void themeMenu() {
+        String[] modes = {Config.AUTO, Config.LIGHT, Config.DARK};
+        String[] names = {"Авто: тёмная с " + Config.DARK_FROM + ":00 до " + Config.DARK_TO + ":00", "Светлая", "Тёмная"};
+        String now = Config.theme(this);
+        for (int i = 0; i < modes.length; i++) if (modes[i].equals(now)) names[i] = "✓  " + names[i];
+        Bits.menu(this, "Тема", names, i -> Config.setTheme(this, modes[i]));
     }
 
     private View dock() {
@@ -277,8 +309,8 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         LinearLayout wifi = Bits.pill(this, getDrawable(R.drawable.ic_wifi), "Wi-Fi", dp(140), dp(78));
         wifi.setOnClickListener(v -> open(new Intent(Settings.ACTION_WIFI_SETTINGS)));
         addPill(r, wifi);
-        LinearLayout bt = Bits.pill(this, getDrawable(R.drawable.ic_bluetooth), "Bluetooth", dp(140), dp(78));
-        bt.setOnClickListener(v -> open(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS)));
+        LinearLayout bt = Bits.pill(this, getDrawable(R.drawable.ic_bluetooth), "Аксессуары", dp(140), dp(78));
+        bt.setOnClickListener(v -> openAccessories());
         addPill(r, bt);
         LinearLayout.LayoutParams gl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         if (groups.getChildCount() > 0) gl.leftMargin = dp(28);
@@ -319,12 +351,12 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         LinearLayout c = new LinearLayout(this);
         c.setOrientation(LinearLayout.VERTICAL);
         float r = dp(22);
-        c.setBackground(Ui.round(getColor(R.color.card), r, dp(1), 0xE6FFFFFF));
+        c.setBackground(Ui.round(getColor(R.color.card), r, dp(1), getColor(R.color.edge)));
         c.setPadding(dp(18), dp(15), dp(18), dp(14));
         if (!focusable) return c;
         c.setFocusable(true);
         c.setOnFocusChangeListener((v, f) -> {
-            v.setBackground(Ui.round(f ? Color.WHITE : getColor(R.color.card), r, dp(1), 0xE6FFFFFF));
+            v.setBackground(Ui.round(getColor(f ? R.color.focus : R.color.card), r, dp(1), getColor(R.color.edge)));
             Ui.focusScale(v, f, 1.025f, dp(10));
         });
         return c;
@@ -389,7 +421,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         weatherBox.addView(now, new LinearLayout.LayoutParams(dp(262), ViewGroup.LayoutParams.MATCH_PARENT));
 
         View line = new View(this);
-        line.setBackgroundColor(0x1A000000);
+        line.setBackgroundColor(getColor(R.color.divider));
         LinearLayout.LayoutParams ll = new LinearLayout.LayoutParams(dp(1), ViewGroup.LayoutParams.MATCH_PARENT);
         ll.leftMargin = dp(10);
         ll.rightMargin = dp(18);
@@ -478,7 +510,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
             int dir = Math.abs(r.change) < 0.05 ? 0 : r.change > 0 ? 1 : -1;
             TextView ch = Ui.text(this, 8.5f, dir > 0 ? R.color.up : dir < 0 ? R.color.down : R.color.text2, Ui.MEDIUM);
             ch.setText(dir == 0 ? "0,0%" : String.format(new Locale("ru", "RU"), "%+.1f%%", r.change));
-            ch.setBackground(Ui.round(dir > 0 ? getColor(R.color.up_bg) : dir < 0 ? getColor(R.color.down_bg) : 0x14000000, dp(7)));
+            ch.setBackground(Ui.round(dir > 0 ? getColor(R.color.up_bg) : dir < 0 ? getColor(R.color.down_bg) : getColor(R.color.chip), dp(7)));
             ch.setPadding(dp(5), dp(2), dp(5), dp(2));
             LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             cl.topMargin = dp(6);
@@ -555,7 +587,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
     private void watchNetwork() {
         ConnectivityManager cm = getSystemService(ConnectivityManager.class);
         if (cm == null) return;
-        cm.registerDefaultNetworkCallback(new ConnectivityManager.NetworkCallback() {
+        netCb = new ConnectivityManager.NetworkCallback() {
             @Override public void onAvailable(Network n) { Net.MAIN.post(() -> wifiBtn.setImageResource(R.drawable.ic_wifi)); }
             @Override public void onLost(Network n) { Net.MAIN.post(() -> wifiBtn.setImageResource(R.drawable.ic_wifi_off)); }
             @Override public void onCapabilitiesChanged(Network n, NetworkCapabilities c) {
@@ -565,7 +597,48 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
                     if (ok && System.currentTimeMillis() - loadedAt > 60_000 && lastRates.isEmpty()) loadData();
                 });
             }
+        };
+        cm.registerDefaultNetworkCallback(netCb);
+    }
+
+    /**
+     * Своё меню «Пульты и аксессуары». На Google TV у приставки нет экрана для
+     * обычного ACTION_BLUETOOTH_SETTINGS, а системный раздел закрыт правом
+     * WRITE_SECURE_SETTINGS — его не берём. Список сопряжённых устройств читаем
+     * сами; экран устройства и экран сопряжения из настроек требуют только
+     * BLUETOOTH_CONNECT: нет права — просим системным окном.
+     */
+    private void openAccessories() {
+        Intent pair = new Intent("com.google.android.intent.action.CONNECT_INPUT");
+        if (pair.resolveActivity(getPackageManager()) == null) { open(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS)); return; }
+        if (android.os.Build.VERSION.SDK_INT >= 31
+                && checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{android.Manifest.permission.BLUETOOTH_CONNECT}, REQ_BT);
+            return;
+        }
+        android.bluetooth.BluetoothManager bm = getSystemService(android.bluetooth.BluetoothManager.class);
+        android.bluetooth.BluetoothAdapter ad = bm == null ? null : bm.getAdapter();
+        List<android.bluetooth.BluetoothDevice> ds = new ArrayList<>();
+        try { if (ad != null) ds.addAll(ad.getBondedDevices()); } catch (SecurityException ignored) { }
+        String[] items = new String[ds.size() + 1];
+        for (int i = 0; i < ds.size(); i++) {
+            String n = ds.get(i).getAlias();
+            items[i] = n == null || n.isEmpty() ? ds.get(i).getAddress() : n;
+        }
+        items[ds.size()] = "+  Подключить новое";
+        Bits.menu(this, "Пульты и аксессуары", items, i -> {
+            if (i == ds.size()) { open(pair); return; }
+            // Экран устройства из настроек: переименовать, отключить, забыть.
+            open(new Intent().setClassName("com.android.tv.settings", "com.android.tv.settings.accessories.BluetoothAccessoryActivity")
+                    .putExtra("accessory_address", ds.get(i).getAddress())
+                    .putExtra("accessory_name", items[i]));
         });
+    }
+
+    @Override public void onRequestPermissionsResult(int req, String[] perms, int[] res) {
+        if (req != REQ_BT) return;
+        if (res.length > 0 && res[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) openAccessories();
+        else toast("Без разрешения «Устройства поблизости» экран аксессуаров не открыть");
     }
 
     private void open(Intent i) {

@@ -63,11 +63,18 @@ final class Ui {
         v.setClipToOutline(true);
     }
 
+    /** Поправка к настройкам экрана: тёмная или светлая тема поверх системной. */
+    static android.content.res.Configuration nightOverride(boolean dark) {
+        android.content.res.Configuration conf = new android.content.res.Configuration();
+        conf.uiMode = dark ? android.content.res.Configuration.UI_MODE_NIGHT_YES : android.content.res.Configuration.UI_MODE_NIGHT_NO;
+        return conf;
+    }
+
     /** Плавное увеличение при фокусе — как на Apple TV. */
     static void focusScale(View v, boolean focused, float scale, float elevationPx) {
         // Мягкая тень на светлом фоне: тёмная по умолчанию выглядит грязным пятном.
-        v.setOutlineSpotShadowColor(0x55303A4A);
-        v.setOutlineAmbientShadowColor(0x33303A4A);
+        v.setOutlineSpotShadowColor(v.getContext().getColor(R.color.shadow_spot));
+        v.setOutlineAmbientShadowColor(v.getContext().getColor(R.color.shadow_ambient));
         v.animate().scaleX(focused ? scale : 1f).scaleY(focused ? scale : 1f)
                 .translationZ(focused ? elevationPx : 0f)
                 .setDuration(focused ? 170 : 140)
