@@ -51,8 +51,13 @@ com.xm.webcontent                      # не проверено: веб-про�
 # Ничего системного, но пользуешься ли ты ими — решать тебе.
 # Prime Video (com.amazon.amazonvideo.livingroom) и Netflix (com.netflix.ninja)
 # на приставке уже были отключены до нас — их 99 не включит.
-#com.google.android.play.games         # не проверено: Play Игры
-#com.android.printspooler              # не проверено: печать (на приставке не нужна)
+# НЕ ДЕРЖИТСЯ (2026-10-25): после перезагрузки снова включён. Включил Google
+# Play (lastDisabledCaller: com.android.vending) — он считает Play Игры своей
+# частью. Отключать бесполезно.
+#com.google.android.play.games         # Play Игры
+# НЕ ДЕРЖИТСЯ (2026-10-25): после перезагрузки состояние сброшено на
+# «по умолчанию» (enabled=0). Кто сбрасывает — по журналу не видно.
+#com.android.printspooler              # печать
 
 
 # ---- 4. ОБНОВЛЕНИЯ ПРОШИВКИ — по желанию владельца -------------------------
