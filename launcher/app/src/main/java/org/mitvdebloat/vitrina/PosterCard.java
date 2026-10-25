@@ -19,7 +19,7 @@ final class PosterCard extends LinearLayout {
     final Kino.Item item;
     final int narrowW, wideW, imgH;
     private final FrameLayout frame;
-    private final ImageView image;
+    private final ImageView image, front;
     private final TextView title, meta;
     private boolean wide;
     private ValueAnimator anim;
@@ -43,12 +43,21 @@ final class PosterCard extends LinearLayout {
         image = new ImageView(c);
         image.setScaleType(ImageView.ScaleType.CENTER_CROP);
         frame.addView(image, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        // Постер целиком поверх размытого фона — когда горизонтальной обложки нет.
+        front = new ImageView(c);
+        front.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        front.setVisibility(GONE);
+        front.setElevation(Ui.dp(c, 6));
+        FrameLayout.LayoutParams fl = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        int m = Ui.dp(c, 10);
+        fl.setMargins(m, m, m, m);
+        frame.addView(front, fl);
         addView(frame, new LayoutParams(narrowW, imgH));
 
         title = Ui.text(c, 11.5f, R.color.text, Ui.MEDIUM);
         title.setText(item.title);
         LayoutParams tl = new LayoutParams(narrowW, ViewGroup.LayoutParams.WRAP_CONTENT);
-        tl.topMargin = Ui.dp(c, 9);
+        tl.topMargin = Ui.dp(c, 8);
         addView(title, tl);
         meta = Ui.text(c, 9f, R.color.text2, Ui.REGULAR);
         meta.setText(item.meta());
@@ -69,9 +78,43 @@ final class PosterCard extends LinearLayout {
     }
 
     private void showImage() {
-        String url = wide && item.cover != null && !item.cover.isEmpty() ? item.cover : item.poster;
-        int w = wide ? wideW : narrowW;
-        Images.load(getContext(), url, w, imgH, image);
+        boolean hasCover = item.cover != null && !item.cover.isEmpty() && !item.cover.equals(item.poster);
+        if (!wide) {
+            plain();
+            Images.load(getContext(), item.poster, narrowW, imgH, image);
+        } else if (hasCover) {
+            plain();
+            // Обложка бывает и вертикальной (у демо — всегда): тогда показываем её целиком.
+            Images.load(getContext(), item.cover, wideW, imgH, image, b -> {
+                if (wide && b.getHeight() * 1.2f > b.getWidth()) posterOnBlur(item.cover);
+            });
+        } else {
+            posterOnBlur(item.poster);
+        }
+    }
+
+    private void plain() {
+        front.setVisibility(GONE);
+        front.setImageDrawable(null);
+        image.setScaleX(1f);
+        image.setScaleY(1f);
+        if (android.os.Build.VERSION.SDK_INT >= 31) image.setRenderEffect(null);
+        image.clearColorFilter();
+    }
+
+    /** Широкая карточка из вертикального постера: размытый фон + постер целиком, ничего не режем. */
+    private void posterOnBlur(String url) {
+        // Фон — тот же постер, декодированный крошечным и растянутым: это уже размытие,
+        // а на Android 12+ его сглаживает RenderEffect.
+        Images.load(getContext(), url, 24, 36, image);
+        image.setScaleX(1.25f);
+        image.setScaleY(1.25f);
+        if (android.os.Build.VERSION.SDK_INT >= 31)
+            image.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(
+                    Ui.dp(getContext(), 14), Ui.dp(getContext(), 14), android.graphics.Shader.TileMode.CLAMP));
+        image.setColorFilter(0x26000000, android.graphics.PorterDuff.Mode.SRC_ATOP);
+        front.setVisibility(VISIBLE);
+        Images.load(getContext(), url, wideW, imgH, front);
     }
 
     void setWide(boolean on, boolean animate) {

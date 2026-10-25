@@ -42,7 +42,7 @@ import java.util.Locale;
 public class MainActivity extends Activity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     // Сетка экрана 960×540 dp (приставка и ТВ: 1920×1080 при плотности 320).
-    private static final int SIDE = 48, IMG_H = 186, POSTER_W = 124, WIDE_W = 330, GAP = 18;
+    private static final int SIDE = 48, IMG_H = 170, POSTER_W = 113, WIDE_W = 302, GAP = 18;  // постер 2:3, обложка 16:9
     private static final int TILE_W = 104, TILE_H = 58, TILE_GAP = 14;
 
     private LinearLayout canvas, row, dockRow, tabsRow, page1;
@@ -104,7 +104,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         page1.setOrientation(LinearLayout.VERTICAL);
         page1.setClipChildren(false);
         page1.setClipToPadding(false);
-        page1.addView(header(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(78)));
+        page1.addView(header(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(90)));
         shelf = new ShelfScroll(this);
         shelf.setHorizontalScrollBarEnabled(false);
         shelf.setClipChildren(false);
@@ -116,7 +116,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         row.setClipToPadding(false);
         row.setPadding(0, dp(8), dp(SIDE + 400), 0);
         shelf.addView(row, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(IMG_H + 52));
+        LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(IMG_H + 64));
         sl.topMargin = dp(8);
         sl.leftMargin = -dp(SIDE);  // полка уходит за левый край, как в видео при прокрутке
         sl.rightMargin = -dp(SIDE);
@@ -126,12 +126,12 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
 
         dockPanel = dock();
         LinearLayout.LayoutParams dl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(TILE_H + 30));
-        dl.topMargin = dp(22);
+        dl.topMargin = dp(16);
         canvas.addView(dockPanel, dl);
 
         page2 = page2();
         LinearLayout.LayoutParams pl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        pl.topMargin = dp(30);
+        pl.topMargin = dp(24);
         canvas.addView(page2, pl);
 
         setContentView(root);
@@ -306,7 +306,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
             LinearLayout r = (LinearLayout) g.getChildAt(1);
             for (TvInputInfo info : ins) {
                 CharSequence label = info.loadLabel(this);
-                LinearLayout pill = Bits.pill(this, getDrawable(info.getType() == TvInputInfo.TYPE_TUNER ? R.drawable.ic_tv : R.drawable.ic_input), label, dp(80), dp(58));
+                LinearLayout pill = Bits.pill(this, getDrawable(info.getType() == TvInputInfo.TYPE_TUNER ? R.drawable.ic_tv : R.drawable.ic_input), label, dp(96), dp(68));
                 pill.setOnClickListener(v -> open(new Intent(Intent.ACTION_VIEW, TvContract.buildChannelUriForPassthroughInput(info.getId()))));
                 addPill(r, pill);
             }
@@ -314,16 +314,16 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         }
         LinearLayout g = group("Ярлыки");
         LinearLayout r = (LinearLayout) g.getChildAt(1);
-        LinearLayout all = Bits.pill(this, getDrawable(R.drawable.ic_apps), "Все приложения", dp(92), dp(58));
+        LinearLayout all = Bits.pill(this, getDrawable(R.drawable.ic_apps), "Все приложения", dp(118), dp(68));
         all.setOnClickListener(v -> startActivity(new Intent(this, AppsActivity.class)));
         addPill(r, all);
-        LinearLayout set = Bits.pill(this, getDrawable(R.drawable.ic_settings), "Настройки", dp(92), dp(58));
+        LinearLayout set = Bits.pill(this, getDrawable(R.drawable.ic_settings), "Настройки", dp(118), dp(68));
         set.setOnClickListener(v -> open(new Intent(Settings.ACTION_SETTINGS)));
         addPill(r, set);
-        LinearLayout wifi = Bits.pill(this, getDrawable(R.drawable.ic_wifi), "Wi-Fi", dp(92), dp(58));
+        LinearLayout wifi = Bits.pill(this, getDrawable(R.drawable.ic_wifi), "Wi-Fi", dp(118), dp(68));
         wifi.setOnClickListener(v -> open(new Intent(Settings.ACTION_WIFI_SETTINGS)));
         addPill(r, wifi);
-        LinearLayout bt = Bits.pill(this, getDrawable(R.drawable.ic_bluetooth), "Bluetooth", dp(92), dp(58));
+        LinearLayout bt = Bits.pill(this, getDrawable(R.drawable.ic_bluetooth), "Bluetooth", dp(118), dp(68));
         bt.setOnClickListener(v -> open(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS)));
         addPill(r, bt);
         LinearLayout.LayoutParams gl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -339,13 +339,13 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         TextView wait = Ui.text(this, 10, R.color.text3, Ui.REGULAR);
         wait.setText("Загружаю погоду…");
         weatherBox.addView(wait);
-        LinearLayout.LayoutParams wl = new LinearLayout.LayoutParams(0, dp(196), 1.45f);
-        LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(0, dp(196), 1f);
+        LinearLayout.LayoutParams wl = new LinearLayout.LayoutParams(0, dp(212), 1.45f);
+        LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(0, dp(212), 1f);
         rl.leftMargin = dp(16);
         cards.addView(weatherBox, wl);
         cards.addView(ratesBox, rl);
         LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        cl.topMargin = dp(22);
+        cl.topMargin = dp(18);
         p.addView(cards, cl);
         return p;
     }
@@ -505,7 +505,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         now.addView(tr);
         TextView desc = Ui.text(this, 10.5f, R.color.text, Ui.MEDIUM);
         desc.setText(Weather.describe(d.code));
-        LinearLayout.LayoutParams dl = new LinearLayout.LayoutParams(dp(150), ViewGroup.LayoutParams.WRAP_CONTENT);
+        LinearLayout.LayoutParams dl = new LinearLayout.LayoutParams(dp(190), ViewGroup.LayoutParams.WRAP_CONTENT);
         dl.topMargin = dp(6);
         now.addView(desc, dl);
         TextView mm = Ui.text(this, 9.5f, R.color.text2, Ui.REGULAR);
@@ -513,7 +513,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         LinearLayout.LayoutParams ml = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         ml.topMargin = dp(3);
         now.addView(mm, ml);
-        body.addView(now, new LinearLayout.LayoutParams(dp(150), ViewGroup.LayoutParams.WRAP_CONTENT));
+        body.addView(now, new LinearLayout.LayoutParams(dp(190), ViewGroup.LayoutParams.WRAP_CONTENT));
 
         LinearLayout hours = new LinearLayout(this);
         for (Weather.Hour h : d.hours) {
@@ -569,12 +569,14 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
             TextView v = Ui.text(this, 10.5f, R.color.text, Ui.MEDIUM);
             v.setText(Rates.money(r.value));
             line.addView(v);
-            TextView ch = Ui.text(this, 8.5f, r.change >= 0 ? R.color.up : R.color.down, Ui.MEDIUM);
-            ch.setText(String.format(new Locale("ru", "RU"), "%+.1f%%", r.change));
+            // Меньше 0,05% — «0,0%», серым: красный или зелёный тут вводит в заблуждение.
+            int dir = Math.abs(r.change) < 0.05 ? 0 : r.change > 0 ? 1 : -1;
+            TextView ch = Ui.text(this, 8.5f, dir > 0 ? R.color.up : dir < 0 ? R.color.down : R.color.text2, Ui.MEDIUM);
+            ch.setText(dir == 0 ? "0,0%" : String.format(new Locale("ru", "RU"), "%+.1f%%", r.change));
             ch.setGravity(Gravity.CENTER);
-            ch.setBackground(Ui.round(getColor(r.change >= 0 ? R.color.up_bg : R.color.down_bg), dp(7)));
+            ch.setBackground(Ui.round(dir > 0 ? getColor(R.color.up_bg) : dir < 0 ? getColor(R.color.down_bg) : 0x14000000, dp(7)));
             ch.setPadding(dp(5), dp(2), dp(5), dp(2));
-            LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(dp(46), ViewGroup.LayoutParams.WRAP_CONTENT);
+            LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(dp(58), ViewGroup.LayoutParams.WRAP_CONTENT);
             cl.leftMargin = dp(10);
             line.addView(ch, cl);
             LinearLayout.LayoutParams ll = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);

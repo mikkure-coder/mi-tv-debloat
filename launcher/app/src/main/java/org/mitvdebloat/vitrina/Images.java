@@ -22,12 +22,17 @@ final class Images {
                 @Override protected int sizeOf(String k, Bitmap b) { return b.getByteCount(); }
             };
 
-    static void load(Context c, String url, int w, int h, ImageView into) {
+    interface After { void loaded(Bitmap b); }
+
+    static void load(Context c, String url, int w, int h, ImageView into) { load(c, url, w, h, into, null); }
+
+    /** after — вызывается с картинкой, когда она встала в into (нужно знать её пропорции). */
+    static void load(Context c, String url, int w, int h, ImageView into, After after) {
         if (url == null || url.isEmpty()) { into.setImageDrawable(null); return; }
         final String key = url + "@" + w + "x" + h;
         into.setTag(R.id.tag_url, key);
         Bitmap m = MEM.get(key);
-        if (m != null) { into.setImageBitmap(m); into.setAlpha(1f); return; }
+        if (m != null) { into.setImageBitmap(m); into.setAlpha(1f); if (after != null) after.loaded(m); return; }
         into.setImageDrawable(null);
         final Context app = c.getApplicationContext();
         Net.POOL.execute(() -> {
@@ -51,6 +56,7 @@ final class Images {
                     into.setImageBitmap(r);
                     into.setAlpha(0f);
                     into.animate().alpha(1f).setDuration(220).start();
+                    if (after != null) after.loaded(r);
                 }
             });
         });

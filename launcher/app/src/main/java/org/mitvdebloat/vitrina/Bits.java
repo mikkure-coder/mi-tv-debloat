@@ -41,7 +41,7 @@ final class Bits {
         p.setClickable(true);
         ImageView iv = new ImageView(c);
         iv.setImageDrawable(icon);
-        int s = Ui.dp(c, 19);
+        int s = Ui.dp(c, 22);
         p.addView(iv, new LinearLayout.LayoutParams(s, s));
         TextView t = Ui.text(c, 9f, R.color.text2, Ui.MEDIUM);
         t.setText(label);
