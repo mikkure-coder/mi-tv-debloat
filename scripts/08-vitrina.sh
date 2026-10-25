@@ -115,6 +115,11 @@ if [[ "$SET_HOME" == "1" ]]; then
     fi
 else
     adb_shell am start -n "$HOME_ACT" >/dev/null
-    log "«Витрина» открыта, но домашним экраном не назначена (это SET_HOME=1)."
+    CUR_HOME="$(adb_shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME | tr -d '\r' | tail -n 1)"
+    if [[ "$CUR_HOME" == "$HOME_ACT" ]]; then
+        log "«Витрина» открыта, она и есть домашний экран."
+    else
+        log "«Витрина» открыта, домашний экран сейчас ${CUR_HOME:-не определён} (сделать «Витрину» домом — SET_HOME=1)."
+    fi
 fi
 log "Откат: REMOVE_LAUNCHER=1 $RUN_DIR/99-restore.sh"
