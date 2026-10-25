@@ -3,21 +3,16 @@
 # 08-vitrina.sh — ставит наш лаунчер «Витрина» и передаёт ему настройки.
 # -----------------------------------------------------------------------------
 # «Витрина» — свой лаунчер проекта (исходники в launcher/, решение владельца
-# 2026-10-25): светлый экран как в Apple TV, полка постеров Кинопоиска,
-# погода и курсы. В отличие от CleanYourTV, ему нужен интернет — только для
-# api.met.no (погода), cbr-xml-daily.ru и api.coingecko.com (курсы),
-# kinopoiskapiunofficial.tech (постеры).
+# 2026-10-25): светлый экран как в Apple TV, часы, погода и курсы. В отличие
+# от CleanYourTV, ему нужен интернет — только для api.met.no (погода),
+# cbr-xml-daily.ru и api.coingecko.com (курсы).
 #
 # Что делает:
 #   1. Ставит APK из launcher/app/build/outputs/apk/release/ (adb install -r).
-#   2. Передаёт настройки: ряд приложений, город и ключ Кинопоиска.
-#      Источники (все необязательные, лежат в папке устройства и в git НЕ
-#      попадают — см. .gitignore):
-#        vitrina.json    — {"dock": [...], "city": "Москва", "lat": 55.75, "lon": 37.62}
-#                          (пример — launcher/vitrina.example.json);
-#        .kinopoisk-key  — одна строка, ключ с kinopoiskapiunofficial.tech.
-#      Ключ можно дать и переменной: KINOPOISK_KEY=... ./scripts/08-vitrina.sh
-#      KINOPOISK_KEY=demo — восемь фильмов для проверки без ключа.
+#   2. Передаёт настройки: ряд приложений и город. Источник необязательный,
+#      лежит в папке устройства и в git НЕ попадает (см. .gitignore):
+#        vitrina.json — {"dock": [...], "city": "Москва", "lat": 55.75, "lon": 37.62}
+#                       (пример — launcher/vitrina.example.json).
 #   3. Только с SET_HOME=1 — делает «Витрину» домашним экраном и проверяет
 #      нажатием Home, что открылась она. Прежний лаунчер остаётся установленным.
 #
@@ -43,7 +38,6 @@ PKG="org.mitvdebloat.vitrina"
 HOME_ACT="$PKG/.MainActivity"
 APK="$ROOT_DIR/launcher/app/build/outputs/apk/release/app-release.apk"
 CFG="$DEVICE_DIR/vitrina.json"
-KEY_FILE="$DEVICE_DIR/.kinopoisk-key"
 DRY_RUN="${DRY_RUN:-0}"
 SET_HOME="${SET_HOME:-0}"
 
@@ -57,25 +51,18 @@ require_cmd python3
 
 # Настройки собираем в JSON и кодируем в base64: так кавычки и кириллица
 # доходят до приставки через adb shell без порчи.
-KEY="${KINOPOISK_KEY:-}"
-if [[ -z "$KEY" && -f "$KEY_FILE" ]]; then
-    KEY="$(tr -d ' \r\n' < "$KEY_FILE")"
-fi
 if [[ -f "$CFG" ]] && ! python3 -I -c 'import json,sys; json.load(open(sys.argv[1], encoding="utf-8"))' "$CFG" 2>/dev/null; then
     err "$CFG — не корректный JSON. Сверь с launcher/vitrina.example.json."
     exit 2
 fi
-B64="$(python3 -I - "$CFG" "$KEY" <<'PY'
+B64="$(python3 -I - "$CFG" <<'PY'
 import base64, json, os, sys
-cfg, key = sys.argv[1], sys.argv[2]
+cfg = sys.argv[1]
 d = json.load(open(cfg, encoding="utf-8")) if os.path.exists(cfg) else {}
-if key:
-    d["kinopoisk_key"] = key
 print(base64.b64encode(json.dumps(d, ensure_ascii=False).encode()).decode())
 PY
 )"
 if [[ -f "$CFG" ]]; then log "Настройки: $CFG"; else log "Своих настроек нет ($CFG) — у лаунчера останутся прежние."; fi
-if [[ -n "$KEY" ]]; then log "Ключ Кинопоиска: передаю (${#KEY} символов)."; else log "Ключ Кинопоиска не передаю — у лаунчера остаётся прежний (без ключа вместо постеров подсказка)."; fi
 
 ensure_adb_connected
 

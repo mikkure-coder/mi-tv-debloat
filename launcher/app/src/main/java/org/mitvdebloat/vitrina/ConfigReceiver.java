@@ -18,7 +18,7 @@ import java.nio.charset.StandardCharsets;
  *       -a org.mitvdebloat.vitrina.CONFIG --es b64 <JSON в base64>
  * В манифесте приёмник закрыт правом DUMP — его есть только у adb shell
  * и системы, обычные приложения прислать настройки не могут.
- * Ключи JSON: dock (список пакетов), city, lat, lon, kinopoisk_key.
+ * Ключи JSON: dock (список пакетов), city, lat, lon.
  * Отсутствующий ключ не трогается.
  */
 public class ConfigReceiver extends BroadcastReceiver {
@@ -37,9 +37,8 @@ public class ConfigReceiver extends BroadcastReceiver {
             if (o.has("city")) e.putString(Config.CITY, o.getString("city"));
             if (o.has("lat")) e.putLong(Config.LAT, Double.doubleToLongBits(o.getDouble("lat")));
             if (o.has("lon")) e.putLong(Config.LON, Double.doubleToLongBits(o.getDouble("lon")));
-            if (o.has("kinopoisk_key")) e.putString(Config.KP_KEY, o.getString("kinopoisk_key").trim());
             e.apply();
-            // Новые настройки — свежие данные: старый кэш погоды и постеров не нужен.
+            // Новые настройки — свежие данные: старый кэш погоды не нужен.
             Net.dropCache(c);
             setResultData("OK");
         } catch (Exception ex) {

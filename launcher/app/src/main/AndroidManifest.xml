@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Погода (Open-Meteo), курсы (ЦБ РФ, CoinGecko), постеры (Кинопоиск). Больше никуда. -->
+    <!-- Погода (met.no), курсы (ЦБ РФ, CoinGecko). Больше никуда. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -17,10 +17,6 @@
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
-        </intent>
-        <intent>
-            <action android:name="android.intent.action.VIEW" />
-            <data android:scheme="kpatv" />
         </intent>
     </queries>
 

@@ -19,7 +19,6 @@ final class Config {
     static final String CITY = "city";
     static final String LAT = "lat";
     static final String LON = "lon";
-    static final String KP_KEY = "kinopoisk_key";
 
     /** Ряд по умолчанию: приложения, которые есть и на ТВ, и на приставке. */
     static final List<String> DEFAULT_DOCK = Arrays.asList(
@@ -45,5 +44,4 @@ final class Config {
     static String city(Context c) { return prefs(c).getString(CITY, "Москва"); }
     static double lat(Context c) { return Double.longBitsToDouble(prefs(c).getLong(LAT, Double.doubleToLongBits(55.7558))); }
     static double lon(Context c) { return Double.longBitsToDouble(prefs(c).getLong(LON, Double.doubleToLongBits(37.6173))); }
-    static String kpKey(Context c) { return prefs(c).getString(KP_KEY, ""); }
 }

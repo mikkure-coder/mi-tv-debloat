@@ -11,7 +11,6 @@ import android.media.tv.TvInputManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
-import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Gravity;
@@ -20,7 +19,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
-import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -34,25 +32,22 @@ import java.util.Locale;
 
 /**
  * Главный экран «Витрины». Две «страницы» на одном полотне:
- *   1) «Для вас»: вкладки, полка постеров Кинопоиска, ряд приложений;
- *   2) ниже ряда: входы (на ТВ), ярлыки, погода и курсы.
+ *   1) часы и дата, большая карточка погоды, ряд приложений;
+ *   2) ниже ряда: входы (на ТВ), ярлыки и курсы.
  * Когда фокус уходит ниже ряда приложений, полотно уезжает вверх, и ряд
  * приложений становится шапкой второй страницы — как в видео.
  */
 public class MainActivity extends Activity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     // Сетка экрана 960×540 dp (приставка и ТВ: 1920×1080 при плотности 320).
-    private static final int SIDE = 48, IMG_H = 170, POSTER_W = 113, WIDE_W = 302, GAP = 18;  // постер 2:3, обложка 16:9
+    private static final int SIDE = 48, WEATHER_H = 292;
     private static final int TILE_W = 104, TILE_H = 58, TILE_GAP = 14;
 
-    private LinearLayout canvas, row, dockRow, tabsRow, page1;
+    private LinearLayout canvas, dockRow, page1;
     private View dockPanel, page2;
-    private ShelfScroll shelf;
-    private TextView ticker;
+    private TextView clockText, dateText, ticker;
     private ImageView wifiBtn;
     private LinearLayout weatherBox, ratesBox;
-    private final List<TextView> tabs = new ArrayList<>();
-    private int tab = 0, selected = 0;
     private boolean shifted;
     private long loadedAt;
     private List<Apps.App> apps = new ArrayList<>();
@@ -104,24 +99,16 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         page1.setOrientation(LinearLayout.VERTICAL);
         page1.setClipChildren(false);
         page1.setClipToPadding(false);
-        page1.addView(header(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(104)));
-        shelf = new ShelfScroll(this);
-        shelf.setHorizontalScrollBarEnabled(false);
-        shelf.setClipChildren(false);
-        shelf.setClipToPadding(false);
-        shelf.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setClipChildren(false);
-        row.setClipToPadding(false);
-        row.setPadding(0, dp(8), dp(SIDE + 400), 0);
-        shelf.addView(row, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(IMG_H + 78));
-        sl.topMargin = dp(8);
-        sl.leftMargin = -dp(SIDE);  // полка уходит за левый край, как в видео при прокрутке
-        sl.rightMargin = -dp(SIDE);
-        shelf.setPadding(dp(SIDE), 0, 0, 0);
-        page1.addView(shelf, sl);
+        page1.addView(header(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(76)));
+        // Погода на первой странице только для глаз: фокус с ряда приложений
+        // вверх идёт сразу на кнопки шапки.
+        weatherBox = card(false);
+        TextView wait = Ui.text(this, 10, R.color.text3, Ui.REGULAR);
+        wait.setText("Загружаю погоду…");
+        weatherBox.addView(wait);
+        LinearLayout.LayoutParams wl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(WEATHER_H));
+        wl.topMargin = dp(8);
+        page1.addView(weatherBox, wl);
         canvas.addView(page1);
 
         dockPanel = dock();
@@ -148,35 +135,12 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         h.setClipToPadding(false);
         LinearLayout left = new LinearLayout(this);
         left.setOrientation(LinearLayout.VERTICAL);
-        left.setClipChildren(false);
-        left.setClipToPadding(false);
-        TextView title = Ui.text(this, 27, R.color.text, Ui.MEDIUM);
-        title.setText("Для вас");
-        left.addView(title);
-        tabsRow = new LinearLayout(this);
-        tabsRow.setClipChildren(false);
-        tabsRow.setClipToPadding(false);
-        for (int i = 0; i < Kino.TABS.length; i++) {
-            final int idx = i;
-            TextView t = Ui.text(this, 11, R.color.text2, Ui.MEDIUM);
-            t.setText(Kino.TABS[i]);
-            t.setPadding(dp(10), dp(5), dp(10), dp(5));
-            t.setFocusable(true);
-            t.setOnFocusChangeListener((v, f) -> {
-                if (f && tab != idx) { tab = idx; styleTabs(); loadShelf(); }
-                styleTabs();
-            });
-            t.setOnClickListener(v -> focusShelf());
-            tabs.add(t);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            if (i == 0) lp.leftMargin = -dp(10);
-            lp.rightMargin = dp(2);
-            tabsRow.addView(t, lp);
-        }
-        styleTabs();
-        LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        tl.topMargin = dp(8);
-        left.addView(tabsRow, tl);
+        clockText = Ui.text(this, 27, R.color.text, Ui.MEDIUM);
+        left.addView(clockText);
+        dateText = Ui.text(this, 11, R.color.text2, Ui.MEDIUM);
+        LinearLayout.LayoutParams dl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dl.topMargin = dp(6);
+        left.addView(dateText, dl);
         h.addView(left, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         LinearLayout right = new LinearLayout(this);
@@ -209,16 +173,6 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         right.addView(ticker, kl);
         h.addView(right, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.END | Gravity.TOP));
         return h;
-    }
-
-    private void styleTabs() {
-        for (int i = 0; i < tabs.size(); i++) {
-            TextView t = tabs.get(i);
-            boolean f = t.hasFocus() || t.isFocused();
-            t.setTextColor(getColor(i == tab ? R.color.text : R.color.text3));
-            t.setBackground(f ? Ui.round(Color.WHITE, dp(14)) : i == tab ? Ui.round(0x80FFFFFF, dp(14)) : null);
-            t.setElevation(f ? dp(4) : 0);
-        }
     }
 
     private View dock() {
@@ -331,22 +285,10 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         groups.addView(g, gl);
         p.addView(groups);
 
-        LinearLayout cards = new LinearLayout(this);
-        cards.setClipChildren(false);
-        cards.setClipToPadding(false);
-        weatherBox = card();
-        ratesBox = card();
-        TextView wait = Ui.text(this, 10, R.color.text3, Ui.REGULAR);
-        wait.setText("Загружаю погоду…");
-        weatherBox.addView(wait);
-        LinearLayout.LayoutParams wl = new LinearLayout.LayoutParams(0, dp(226), 1.45f);
-        LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(0, dp(226), 1f);
-        rl.leftMargin = dp(16);
-        cards.addView(weatherBox, wl);
-        cards.addView(ratesBox, rl);
-        LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        cl.topMargin = dp(14);
-        p.addView(cards, cl);
+        ratesBox = card(true);
+        LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(128));
+        rl.topMargin = dp(14);
+        p.addView(ratesBox, rl);
         return p;
     }
 
@@ -373,12 +315,13 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         r.addView(pill, lp);
     }
 
-    private LinearLayout card() {
+    private LinearLayout card(boolean focusable) {
         LinearLayout c = new LinearLayout(this);
         c.setOrientation(LinearLayout.VERTICAL);
         float r = dp(22);
         c.setBackground(Ui.round(getColor(R.color.card), r, dp(1), 0xE6FFFFFF));
         c.setPadding(dp(18), dp(15), dp(18), dp(14));
+        if (!focusable) return c;
         c.setFocusable(true);
         c.setOnFocusChangeListener((v, f) -> {
             v.setBackground(Ui.round(f ? Color.WHITE : getColor(R.color.card), r, dp(1), 0xE6FFFFFF));
@@ -391,157 +334,114 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
 
     private void loadData() {
         loadedAt = System.currentTimeMillis();
-        loadShelf();
         Weather.load(this, this::showWeather);
         Rates.load(this, r -> { lastRates = r; showRates(r); updateTicker(); });
     }
 
-    private void loadShelf() {
-        final int forTab = tab;
-        Kino.load(this, forTab, (items, err) -> {
-            if (forTab != tab) return;
-            boolean shelfFocused = row.hasFocus();
-            row.removeAllViews();
-            selected = 0;
-            if (items.isEmpty()) { row.addView(placeholder(err)); return; }
-            for (int i = 0; i < items.size(); i++) {
-                final int idx = i;
-                Kino.Item it = items.get(i);
-                PosterCard pc = new PosterCard(this, it, dp(POSTER_W), dp(WIDE_W), dp(IMG_H));
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT);
-                if (i > 0) lp.leftMargin = dp(GAP);
-                pc.setOnFocusChangeListener(chain(pc.getOnFocusChangeListener(), (v, f) -> { if (f) select(idx); }));
-                pc.setOnClickListener(v -> openFilm(it));
-                row.addView(pc, lp);
-                pc.setWide(i == 0, false);
-            }
-            shelf.scrollTo(0, 0);
-            if (shelfFocused) row.getChildAt(0).requestFocus();
-        });
-    }
-
-    private static View.OnFocusChangeListener chain(View.OnFocusChangeListener a, View.OnFocusChangeListener b) {
-        return (v, f) -> { if (a != null) a.onFocusChange(v, f); b.onFocusChange(v, f); };
-    }
-
-    private void select(int idx) {
-        if (idx == selected && row.getChildAt(idx) instanceof PosterCard && ((PosterCard) row.getChildAt(idx)).frame().getLayoutParams().width == dp(WIDE_W)) {
-            shelf.smoothScrollTo(idx * (dp(POSTER_W) + dp(GAP)), 0);
-            return;
-        }
-        View old = row.getChildAt(selected);
-        if (old instanceof PosterCard) ((PosterCard) old).setWide(false, true);
-        selected = idx;
-        View now = row.getChildAt(idx);
-        if (now instanceof PosterCard) ((PosterCard) now).setWide(true, true);
-        shelf.smoothScrollTo(idx * (dp(POSTER_W) + dp(GAP)), 0);
-    }
-
-    private void focusShelf() {
-        View v = row.getChildAt(selected);
-        if (v != null && v.isFocusable()) v.requestFocus();
-    }
-
-    private View placeholder(String err) {
-        LinearLayout p = new LinearLayout(this);
-        p.setOrientation(LinearLayout.VERTICAL);
-        p.setGravity(Gravity.CENTER_VERTICAL);
-        p.setPadding(dp(26), 0, dp(26), 0);
-        p.setBackground(Ui.round(0xFFE6EBF2, dp(14), dp(1), 0xE6FFFFFF));
-        TextView t = Ui.text(this, 15, R.color.text, Ui.MEDIUM);
-        TextView s = Ui.text(this, 10, R.color.text2, Ui.REGULAR);
-        s.setSingleLine(false);
-        s.setLineSpacing(dp(2), 1f);
-        if ("nokey".equals(err)) {
-            t.setText("Здесь будут постеры Кинопоиска");
-            s.setText("Нужен бесплатный ключ kinopoiskapiunofficial.tech.\nОн ставится с ноутбука скриптом 08 — см. launcher/README.md.");
-        } else {
-            t.setText("Кинопоиск пока не ответил");
-            s.setText("Нет сети или ключ не подошёл. Попробуем снова через полчаса.");
-        }
-        p.addView(t);
-        LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        sl.topMargin = dp(8);
-        p.addView(s, sl);
-        p.setLayoutParams(new LinearLayout.LayoutParams(dp(WIDE_W + 2 * (POSTER_W + GAP)), dp(IMG_H)));
-        p.setFocusable(true);
-        return p;
-    }
-
-    private void openFilm(Kino.Item it) {
-        Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse("kpatv://film/" + it.id));
-        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        if (i.resolveActivity(getPackageManager()) != null) { open(i); return; }
-        if (!Apps.launch(this, "ru.kinopoisk.tv")) toast("Нет приложения Кинопоиск");
-    }
-
     private void showWeather(Weather.Data d) {
         weatherBox.removeAllViews();
-        TextView city = Ui.text(this, 10, R.color.text2, Ui.MEDIUM);
-        city.setText(Config.city(this));
-        weatherBox.addView(city);
         if (d == null) {
+            TextView city = Ui.text(this, 10, R.color.text2, Ui.MEDIUM);
+            city.setText(Config.city(this));
+            weatherBox.addView(city);
             TextView t = Ui.text(this, 12, R.color.text2, Ui.REGULAR);
-            t.setText("Погода не загрузилась");
+            t.setText("Погода не загрузилась. Попробуем снова через полчаса.");
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.topMargin = dp(10);
             weatherBox.addView(t, lp);
             return;
         }
-        LinearLayout body = new LinearLayout(this);
-        body.setGravity(Gravity.CENTER_VERTICAL);
+        weatherBox.setOrientation(LinearLayout.HORIZONTAL);
+
+        // Слева — сейчас: город, значок и температура, описание, макс/мин, восход/закат.
         LinearLayout now = new LinearLayout(this);
         now.setOrientation(LinearLayout.VERTICAL);
+        TextView city = Ui.text(this, 10, R.color.text2, Ui.MEDIUM);
+        city.setText(Config.city(this));
+        now.addView(city);
         LinearLayout tr = new LinearLayout(this);
         tr.setGravity(Gravity.CENTER_VERTICAL);
         ImageView ic = new ImageView(this);
         ic.setImageDrawable(new WeatherIcon(Weather.kind(d.code, d.day)));
-        tr.addView(ic, new LinearLayout.LayoutParams(dp(38), dp(38)));
-        TextView temp = Ui.text(this, 34, R.color.text, Ui.LIGHT);
+        tr.addView(ic, new LinearLayout.LayoutParams(dp(56), dp(56)));
+        TextView temp = Ui.text(this, 46, R.color.text, Ui.LIGHT);
         temp.setText(d.temp + "°");
         LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        tl.leftMargin = dp(8);
+        tl.leftMargin = dp(10);
         tr.addView(temp, tl);
-        now.addView(tr);
-        TextView desc = Ui.text(this, 10.5f, R.color.text, Ui.MEDIUM);
+        LinearLayout.LayoutParams trl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        trl.topMargin = dp(12);
+        now.addView(tr, trl);
+        TextView desc = Ui.text(this, 12, R.color.text, Ui.MEDIUM);
         desc.setText(Weather.describe(d.code));
-        LinearLayout.LayoutParams dl = new LinearLayout.LayoutParams(dp(215), ViewGroup.LayoutParams.WRAP_CONTENT);
-        dl.topMargin = dp(6);
+        LinearLayout.LayoutParams dl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dl.topMargin = dp(10);
         now.addView(desc, dl);
-        TextView mm = Ui.text(this, 9.5f, R.color.text2, Ui.REGULAR);
-        mm.setText("Макс " + d.max + "° · Мин " + d.min + "°");
+        TextView mm = Ui.text(this, 10, R.color.text2, Ui.REGULAR);
+        mm.setText("За сутки: от " + d.min + "° до " + d.max + "°");
         LinearLayout.LayoutParams ml = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        ml.topMargin = dp(3);
+        ml.topMargin = dp(5);
         now.addView(mm, ml);
-        body.addView(now, new LinearLayout.LayoutParams(dp(215), ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        LinearLayout hours = new LinearLayout(this);
-        for (Weather.Hour h : d.hours) {
-            LinearLayout col = new LinearLayout(this);
-            col.setOrientation(LinearLayout.VERTICAL);
-            col.setGravity(Gravity.CENTER_HORIZONTAL);
-            TextView ht = Ui.text(this, 9, R.color.text2, Ui.REGULAR);
-            ht.setText(h.time);
-            col.addView(ht);
-            ImageView hi = new ImageView(this);
-            hi.setImageDrawable(new WeatherIcon(Weather.kind(h.code, h.day)));
-            LinearLayout.LayoutParams il = new LinearLayout.LayoutParams(dp(22), dp(22));
-            il.topMargin = dp(6);
-            col.addView(hi, il);
-            TextView tt = Ui.text(this, 11, R.color.text, Ui.MEDIUM);
-            tt.setText(h.temp + "°");
-            LinearLayout.LayoutParams ttl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            ttl.topMargin = dp(6);
-            col.addView(tt, ttl);
-            hours.addView(col, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        }
-        body.addView(hours, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
-        bl.topMargin = dp(6);
-        weatherBox.addView(body, bl);
+        now.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1f));
         TextView sun = Ui.text(this, 9, R.color.text3, Ui.REGULAR);
-        sun.setText("Восход " + d.sunrise + "   ·   Закат " + d.sunset);
-        weatherBox.addView(sun);
+        sun.setText("Восход " + d.sunrise + "  ·  Закат " + d.sunset);
+        now.addView(sun);
+        weatherBox.addView(now, new LinearLayout.LayoutParams(dp(262), ViewGroup.LayoutParams.MATCH_PARENT));
+
+        View line = new View(this);
+        line.setBackgroundColor(0x1A000000);
+        LinearLayout.LayoutParams ll = new LinearLayout.LayoutParams(dp(1), ViewGroup.LayoutParams.MATCH_PARENT);
+        ll.leftMargin = dp(10);
+        ll.rightMargin = dp(18);
+        weatherBox.addView(line, ll);
+
+        // Справа — по часам и на следующие дни.
+        LinearLayout ahead = new LinearLayout(this);
+        ahead.setOrientation(LinearLayout.VERTICAL);
+        ahead.addView(caption("По часам"));
+        LinearLayout hours = new LinearLayout(this);
+        for (Weather.Hour h : d.hours) hours.addView(forecast(h.time, h.code, h.day, h.temp + "°"), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        LinearLayout.LayoutParams hl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        hl.topMargin = dp(8);
+        ahead.addView(hours, hl);
+        if (!d.days.isEmpty()) {
+            ahead.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1f));
+            ahead.addView(caption("Дальше"));
+            LinearLayout days = new LinearLayout(this);
+            for (Weather.Day x : d.days) days.addView(forecast(x.name, x.code, true, x.max + "° / " + x.min + "°"), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            LinearLayout.LayoutParams yl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            yl.topMargin = dp(8);
+            ahead.addView(days, yl);
+        }
+        weatherBox.addView(ahead, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+    }
+
+    private TextView caption(String s) {
+        TextView t = Ui.text(this, 9, R.color.text3, Ui.MEDIUM);
+        t.setText(s);
+        return t;
+    }
+
+    /** Столбик прогноза: подпись, значок, температура. */
+    private View forecast(String label, int code, boolean day, String temp) {
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setGravity(Gravity.CENTER_HORIZONTAL);
+        TextView ht = Ui.text(this, 9.5f, R.color.text2, Ui.REGULAR);
+        ht.setText(label);
+        ht.setGravity(Gravity.CENTER_HORIZONTAL);
+        col.addView(ht);
+        ImageView hi = new ImageView(this);
+        hi.setImageDrawable(new WeatherIcon(Weather.kind(code, day)));
+        LinearLayout.LayoutParams il = new LinearLayout.LayoutParams(dp(26), dp(26));
+        il.topMargin = dp(6);
+        col.addView(hi, il);
+        TextView tt = Ui.text(this, 11.5f, R.color.text, Ui.MEDIUM);
+        tt.setText(temp);
+        LinearLayout.LayoutParams ttl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        ttl.topMargin = dp(6);
+        col.addView(tt, ttl);
+        return col;
     }
 
     private void showRates(List<Rates.Rate> rs) {
@@ -560,33 +460,43 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
             ratesBox.addView(e);
             return;
         }
+        LinearLayout cols = new LinearLayout(this);
         for (Rates.Rate r : rs) {
-            LinearLayout line = new LinearLayout(this);
-            line.setGravity(Gravity.CENTER_VERTICAL);
-            TextView n = Ui.text(this, 10.5f, R.color.text, Ui.REGULAR);
+            LinearLayout col = new LinearLayout(this);
+            col.setOrientation(LinearLayout.VERTICAL);
+            TextView n = Ui.text(this, 10, R.color.text2, Ui.REGULAR);
             n.setText(r.sign + "  " + r.name);
-            line.addView(n, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-            TextView v = Ui.text(this, 10.5f, R.color.text, Ui.MEDIUM);
+            // Высота строки задана: знак ₿ выше обычных букв и иначе сдвигает свой столбик.
+            n.setGravity(Gravity.CENTER_VERTICAL);
+            col.addView(n, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(22)));
+            TextView v = Ui.text(this, 13, R.color.text, Ui.MEDIUM);
             v.setText(Rates.money(r.value));
-            line.addView(v);
+            LinearLayout.LayoutParams vl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            vl.topMargin = dp(6);
+            col.addView(v, vl);
             // Меньше 0,05% — «0,0%», серым: красный или зелёный тут вводит в заблуждение.
             int dir = Math.abs(r.change) < 0.05 ? 0 : r.change > 0 ? 1 : -1;
             TextView ch = Ui.text(this, 8.5f, dir > 0 ? R.color.up : dir < 0 ? R.color.down : R.color.text2, Ui.MEDIUM);
             ch.setText(dir == 0 ? "0,0%" : String.format(new Locale("ru", "RU"), "%+.1f%%", r.change));
-            ch.setGravity(Gravity.CENTER);
             ch.setBackground(Ui.round(dir > 0 ? getColor(R.color.up_bg) : dir < 0 ? getColor(R.color.down_bg) : 0x14000000, dp(7)));
             ch.setPadding(dp(5), dp(2), dp(5), dp(2));
-            LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(dp(66), ViewGroup.LayoutParams.WRAP_CONTENT);
-            cl.leftMargin = dp(10);
-            line.addView(ch, cl);
-            LinearLayout.LayoutParams ll = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
-            ratesBox.addView(line, ll);
+            LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            cl.topMargin = dp(6);
+            col.addView(ch, cl);
+            cols.addView(col, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         }
+        LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        sl.topMargin = dp(10);
+        ratesBox.addView(cols, sl);
     }
 
     private void updateTicker() {
-        StringBuilder sb = new StringBuilder(new SimpleDateFormat("HH:mm  ·  EE, d MMMM", new Locale("ru", "RU")).format(new Date()));
-        for (Rates.Rate r : lastRates) sb.append("     ").append(Rates.brief(r));
+        Date now = new Date();
+        clockText.setText(new SimpleDateFormat("HH:mm", Locale.US).format(now));
+        String day = new SimpleDateFormat("EEEE, d MMMM", new Locale("ru", "RU")).format(now);
+        dateText.setText(Character.toUpperCase(day.charAt(0)) + day.substring(1));
+        StringBuilder sb = new StringBuilder();
+        for (Rates.Rate r : lastRates) sb.append(sb.length() > 0 ? "     " : "").append(Rates.brief(r));
         ticker.setText(sb);
     }
 
@@ -664,10 +574,4 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
     }
 
     private void toast(CharSequence s) { Toast.makeText(this, s, Toast.LENGTH_SHORT).show(); }
-
-    /** Горизонтальная прокрутка без собственной «докрутки к фокусу»: полку двигаем сами. */
-    static final class ShelfScroll extends HorizontalScrollView {
-        ShelfScroll(Context c) { super(c); }
-        @Override protected int computeScrollDeltaToGetChildRectOnScreen(android.graphics.Rect r) { return 0; }
-    }
 }

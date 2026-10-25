@@ -19,12 +19,18 @@ final class Weather {
 
     static final class Hour { String time; int temp, code; boolean day; }
 
+    /** Следующие дни: подпись («Вс, 26»), макс/мин и погода около полудня. */
+    static final class Day { String name; int max = Integer.MIN_VALUE, min = Integer.MAX_VALUE, code = 3; long noonDist = Long.MAX_VALUE; }
+
     static final class Data {
         int temp, code, max, min;
         boolean day;
         String sunrise = "", sunset = "";
         final List<Hour> hours = new ArrayList<>();
+        final List<Day> days = new ArrayList<>();
     }
+
+    static final int HOURS = 8, DAYS = 4;
 
     interface Callback { void done(Data d); }
 
@@ -42,6 +48,8 @@ final class Weather {
                 iso.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
                 java.text.SimpleDateFormat hhmm = new java.text.SimpleDateFormat("HH:mm", Locale.US);
                 java.text.SimpleDateFormat dayKey = new java.text.SimpleDateFormat("yyyyMMdd", Locale.US);
+                java.text.SimpleDateFormat dayName = new java.text.SimpleDateFormat("EE, d", new Locale("ru", "RU"));
+                java.util.Calendar cal = java.util.Calendar.getInstance();
                 long now = System.currentTimeMillis();
                 String today = dayKey.format(new java.util.Date(now));
                 long[] sun = sunTimes(lat, lon, now);
@@ -58,11 +66,26 @@ final class Weather {
                     JSONObject n1 = data.optJSONObject("next_1_hours");
                     if (n1 == null) n1 = data.optJSONObject("next_6_hours");
                     String sym = n1 == null ? "cloudy" : n1.getJSONObject("summary").getString("symbol_code");
-                    if (dayKey.format(new java.util.Date(t)).equals(today)) { d.max = Math.max(d.max, temp); d.min = Math.min(d.min, temp); }
+                    String key = dayKey.format(new java.util.Date(t));
+                    // Макс и мин — на ближайшие сутки: поздно вечером от «сегодня» остаётся час-другой.
+                    if (t + 3600_000L > now && t < now + 24 * 3600_000L) { d.max = Math.max(d.max, temp); d.min = Math.min(d.min, temp); }
+                    if (!key.equals(today)) {
+                        Day x = d.days.isEmpty() ? null : d.days.get(d.days.size() - 1);
+                        if (x == null || !key.equals(x.name)) {
+                            if (d.days.size() == DAYS) continue;
+                            x = new Day();
+                            x.name = key;  // временно ключ дня, подпись ставим в конце
+                            d.days.add(x);
+                        }
+                        x.max = Math.max(x.max, temp); x.min = Math.min(x.min, temp);
+                        cal.setTimeInMillis(t);
+                        long dist = Math.abs(cal.get(java.util.Calendar.HOUR_OF_DAY) - 13);
+                        if (n1 != null && dist < x.noonDist) { x.noonDist = dist; x.code = code(sym); }
+                    }
                     if (t + 3600_000L <= now) continue;            // этот час уже прошёл
                     boolean day = isDay(sym, t, lat, lon);
                     if (!haveNow) { d.temp = temp; d.code = code(sym); d.day = day; haveNow = true; continue; }
-                    if (d.hours.size() < 6) {
+                    if (d.hours.size() < HOURS) {
                         Hour x = new Hour();
                         x.time = hhmm.format(new java.util.Date(t));
                         x.temp = temp; x.code = code(sym); x.day = day;
@@ -71,6 +94,10 @@ final class Weather {
                 }
                 if (!haveNow) { cb.done(null); return; }
                 if (d.max == Integer.MIN_VALUE) { d.max = d.temp; d.min = d.temp; }
+                for (Day x : d.days) {
+                    String nm = dayName.format(dayKey.parse(x.name));
+                    x.name = Character.toUpperCase(nm.charAt(0)) + nm.substring(1);
+                }
                 cb.done(d);
             } catch (Exception e) {
                 cb.done(null);
@@ -120,8 +147,6 @@ final class Weather {
         double w = Math.toDegrees(Math.acos(cw)) / 360.0;
         return new long[]{(long) ((jt - w - 2440587.5) * 86400000.0), (long) ((jt + w - 2440587.5) * 86400000.0)};
     }
-
-    private static String hm(String iso) { return iso.length() >= 16 ? iso.substring(11, 16) : iso; }
 
     /** Код погоды ВМО → слова. */
     static String describe(int code) {

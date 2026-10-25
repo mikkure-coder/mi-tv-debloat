@@ -15,6 +15,5 @@ launcher/.gradle/
 launcher/app/build/
 launcher/build/
 launcher/local.properties
-# Настройки «Витрины» и ключ Кинопоиска — личные (город, ключ), в репо нельзя
+# Настройки «Витрины» — личные (город), в репо нельзя
 vitrina.json
-.kinopoisk-key
