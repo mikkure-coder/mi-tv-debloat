@@ -70,12 +70,18 @@ INSTALLED="$(adb_shell pm list packages | tr -d '\r' | sed 's|^package:||' | sor
 # tvlauncher, а PatchWall назывался com.mitv.tvhome.atv и домом не был.
 # Отключённые пакеты система сюда не включает — значит, «запасной» лаунчер,
 # который уже выключен, за запасной не посчитается.
-# FallbackHome из com.android.tv.settings — аварийная заглушка без иконок,
-# настоящим домашним экраном она не считается.
+# Настоящим домашним экраном НЕ считаются две аварийные заглушки без иконок:
+#   - FallbackHome из com.android.tv.settings;
+#   - RecoveryActivity мастера настройки com.google.android.tungsten.setupwraith.
+#     На приставке Xiaomi TV Box S 2 (Google TV) она числится домом с
+#     приоритетом 1 (CleanYourTV, examples/xiaomi-mi-box-s-2nd-gen). Без этого
+#     исключения скрипт счёл бы её «запасным домом» и дал отключить Google TV
+#     ещё до установки нового лаунчера.
 HOME_PKGS="$(adb_shell cmd package query-activities --brief \
     -a android.intent.action.MAIN -c android.intent.category.HOME \
     | tr -d '\r' | grep -oE '^[[:space:]]*[A-Za-z0-9_.]+/' | tr -d ' /' \
-    | grep -vxF 'com.android.tv.settings' | sort -u)"
+    | grep -vxF -e 'com.android.tv.settings' -e 'com.google.android.tungsten.setupwraith' \
+    | sort -u)"
 log "Домашние экраны на ТВ: $(echo "$HOME_PKGS" | tr '\n' ' ')"
 
 # Счётчики. В конце напечатаем сводку.

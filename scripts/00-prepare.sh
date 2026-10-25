@@ -77,7 +77,8 @@ adb_shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c 
 # Проверим, установлен ли стандартный Android TV launcher — он нужен как
 # «страховочный» вариант, если что-то пойдёт не так с PatchWall.
 log "---"
-if adb_shell pm list packages | grep -qE 'com.google.android.(tvlauncher|leanbacklauncher)'; then
+# apps.tv.launcherx — домашний экран Google TV (так на приставке TV Box S 2).
+if adb_shell pm list packages | tr -d '\r' | grep -qE 'com\.google\.android\.(tvlauncher|leanbacklauncher|apps\.tv\.launcherx)$'; then
     log "ОК: на ТВ есть стандартный Android TV launcher (fallback)."
 else
     warn "На ТВ нет штатного Android TV launcher!"
