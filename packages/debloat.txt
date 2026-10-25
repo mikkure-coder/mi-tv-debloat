@@ -54,12 +54,17 @@ com.xiaomi.statistic              # статистика Xiaomi — отключ
 #android.autoinstalls.config.xiaomi.amelie  # автоустановка приложений партнёров — не проверено
 
 
-# ---- РЕКОМЕНДАЦИИ Google (только ПОСЛЕ смены лаунчера) ---------------------
-# В списке CYT для MSSP1, но проверены там с ДРУГИМ лаунчером. Пока главный
-# экран — Google tvlauncher, отключение может сломать ряды на главном экране.
+# ---- РЕКОМЕНДАЦИИ Google и Play-приложения (включено 2026-10-25) -----------
+# Лаунчер сменён: Google tvlauncher отключён, домом стал com.gathin.tvhome,
+# поэтому ленты рекомендаций больше некуда показывать. Оба в списке CYT для
+# MSSP1. Play Фильмы и Play Игры сами запускаются в фоне (logcat: «Start proc …
+# for broadcast/service»), Play Фильмы держали ~43 МБ; владелец ими не пользуется
+# (последнее открытие давно / ни разу).
 
-#com.google.android.tvrecommendations              # ленты рекомендаций — CYT, после лаунчера
-#com.google.android.leanbacklauncher.recommendations  # то же для старого лаунчера — CYT, после лаунчера
+com.google.android.tvrecommendations              # ленты рекомендаций — CYT, не проверено, держится ли
+com.google.android.leanbacklauncher.recommendations  # то же для старого лаунчера — CYT, не проверено
+com.google.android.videos                         # Play Фильмы — не проверено, держится ли
+com.google.android.play.games                     # Play Игры — не проверено, держится ли
 
 
 # ---- PATCHWALL как приложение ----------------------------------------------
