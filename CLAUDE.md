@@ -42,7 +42,7 @@
 - коммит в git IP телевизора, его MAC, логов запусков, бэкапов и `*.apk`
   (см. `.gitignore`; файл `.tv-host` локальный и в репозиторий не попадает);
 - скачивание APK откуда-либо, кроме F-Droid / официальных исходников проекта.
-  Разрешены два лаунчера:
+  Разрешены три лаунчера:
   - FLauncher: `me.efesser.flauncher`, https://gitlab.com/flauncher/flauncher
     (готовый APK из F-Droid);
   - лаунчер CleanYourTV: `com.gathin.tvhome`, https://github.com/Gathin23/cleanyourtv
@@ -53,6 +53,14 @@
     выдаёт `WRITE_SECURE_SETTINGS`. Службу специальных возможностей
     `HomeKeyService` не включать без отдельного решения — она нужна, только
     если кнопка Home шлёт `KEYCODE_ALL_APPS`. Ставить нашим `03`.
+  - «Витрина»: `org.mitvdebloat.vitrina`, свой лаунчер проекта в `launcher/`
+    (решение владельца 2026-10-25: «как в видео» — светлый экран, постеры
+    Кинопоиска, погода, курсы). Собирается здесь же, ставится `08`. В отличие
+    от CleanYourTV у него есть `INTERNET` — только для api.met.no,
+    cbr-xml-daily.ru, api.coingecko.com, kinopoiskapiunofficial.tech и
+    картинок Кинопоиска. Новые адреса и любые сторонние библиотеки — только
+    с решения владельца. Ключ Кинопоиска и город — в локальных
+    `.kinopoisk-key` и `vitrina.json` папки устройства, в git их нет.
 - отключение Google-лаунчера `com.google.android.tvlauncher` в обход условий.
   С 2026-10-25 (решение владельца) он не в стоп-листе, потому что иначе
   сторонний лаунчер на 4S не станет домом (приоритет HOME 2 против 0).
@@ -135,8 +143,12 @@ packages/components.txt — «пакет/компонент»: какие час
 packages/settings.txt   — «раздел ключ значение» для 06 (сейчас анимации 0.5×)
 themes/glass-mitv/       — наша тема (glass из CYT + наши приложения в нижнем ряду)
 packages/keep.txt       — стоп-лист; 02 читает его и при совпадении не делает ничего
+scripts/08-vitrina.sh   — ставит «Витрину» (launcher/), передаёт ей настройки
+                          (ряд, город, ключ Кинопоиска); SET_HOME=1 — сделать домом
+launcher/               — исходники лаунчера «Витрина» (Java, без зависимостей),
+                          README.md — что на экране, откуда данные, сборка
 mibox-s2/               — подпроект приставки TV Box S 2: обёртки scripts/ (00, 01,
-                          02, 03, 07, 99) с DEVICE_DIR=mibox-s2, свои packages/,
+                          02, 03, 07, 08, 99) с DEVICE_DIR=mibox-s2, свои packages/,
                           README.md для владельца, CLAUDE.md с журналом
 ```
 

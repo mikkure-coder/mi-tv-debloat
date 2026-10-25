@@ -200,11 +200,11 @@ fi
 # Если нужно полностью откатить ТВ в исходное состояние, запусти:
 #   REMOVE_LAUNCHER=1 ./scripts/99-restore.sh
 # (старое имя REMOVE_FLAUNCHER=1 тоже работает). Удаляются оба разрешённых
-# лаунчера, если стоят: FLauncher и лаунчер CleanYourTV. Удаление идёт ДО
+# лаунчера, если стоят: FLauncher, лаунчер CleanYourTV и наша «Витрина». Удаление идёт ДО
 # шага 3, поэтому шаг 3 вернёт домашний экран из бэкапа.
 REMOVE_LAUNCHER="${REMOVE_LAUNCHER:-${REMOVE_FLAUNCHER:-0}}"
 if [[ "$REMOVE_LAUNCHER" == "1" ]]; then
-    for L_PKG in me.efesser.flauncher com.gathin.tvhome; do
+    for L_PKG in me.efesser.flauncher com.gathin.tvhome org.mitvdebloat.vitrina; do
         if ! echo "$INSTALLED" | grep -qxF "$L_PKG"; then
             log "$L_PKG не установлен — пропускаю удаление."
             continue

@@ -184,8 +184,15 @@ mi-tv-debloat/
 ├── logs/                    — локальные логи запусков (gitignore)
 ├── backup/                  — локальные бэкапы списков пакетов (gitignore)
 ├── apks/                    — скачанный APK FLauncher (gitignore)
+├── launcher/                — свой лаунчер «Витрина» (исходники)
 └── mibox-s2/                — подпроект: приставка Xiaomi TV Box S 2 (Google TV)
 ```
+
+## Свой лаунчер «Витрина»
+
+Светлый домашний экран в стиле Apple TV с постерами Кинопоиска, погодой и
+курсами — в папке [`launcher/`](launcher/README.md). Ставится скриптом
+`08-vitrina.sh`. Сейчас — домашний экран приставки.
 
 ## Приставка Xiaomi TV Box S 2
 
