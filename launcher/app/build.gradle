@@ -1,0 +1,27 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'org.mitvdebloat.vitrina'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'org.mitvdebloat.vitrina'
+        minSdk 28          // Mi TV 4S — Android 9
+        targetSdk 34       // приставка — Android 14
+        versionCode 1
+        versionName '0.1'
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            // Подпись отладочным ключом ноутбука: приложение ставится только
+            // нами через adb, а один и тот же ключ даёт обновлять его поверх.
+            signingConfig signingConfigs.debug
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    lint { abortOnError false }
+}
+// Зависимостей нет специально: весь код лаунчера — в этой папке, его можно прочитать целиком.

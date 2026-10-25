@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Светлая тема, как в видео: холодный белый фон, тёмный текст. -->
+    <color name="bg_top">#FFF5F8FC</color>
+    <color name="bg_bottom">#FFD9E2EE</color>
+    <color name="text">#FF1D1D1F</color>
+    <color name="text2">#FF6E6E73</color>
+    <color name="text3">#FF98989D</color>
+    <color name="glass">#9EFFFFFF</color>
+    <color name="glass_edge">#D9FFFFFF</color>
+    <color name="card">#C7FFFFFF</color>
+    <color name="up">#FF2E9E5B</color>
+    <color name="down">#FFD8443A</color>
+    <color name="up_bg">#2234C26A</color>
+    <color name="down_bg">#22E5484D</color>
+</resources>

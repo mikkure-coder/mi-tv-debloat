@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Vitrina" parent="@android:style/Theme.DeviceDefault.Light.NoActionBar">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowBackground">@drawable/bg</item>
+        <item name="android:windowShowWallpaper">false</item>
+        <item name="android:colorAccent">#FF1D1D1F</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+    <style name="VitrinaDialog" parent="@android:style/Theme.DeviceDefault.Light.Dialog.NoActionBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimAmount">0.25</item>
+    </style>
+</resources>
