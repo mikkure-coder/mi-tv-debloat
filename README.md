@@ -183,8 +183,16 @@ mi-tv-debloat/
 │   └── keep.txt             — что НЕ трогаем (ТВ без них работать перестанет)
 ├── logs/                    — локальные логи запусков (gitignore)
 ├── backup/                  — локальные бэкапы списков пакетов (gitignore)
-└── apks/                    — скачанный APK FLauncher (gitignore)
+├── apks/                    — скачанный APK FLauncher (gitignore)
+└── mibox-s2/                — подпроект: приставка Xiaomi TV Box S 2 (Google TV)
 ```
+
+## Приставка Xiaomi TV Box S 2
+
+Та же очистка для приставки живёт в отдельной папке [`mibox-s2/`](mibox-s2/README.md):
+там свои списки пакетов, бэкапы и порядок запуска. Скрипты общие, их
+запускают обёртки из `mibox-s2/scripts/`, например
+`./mibox-s2/scripts/00-prepare.sh`.
 
 ## Безопасность
 

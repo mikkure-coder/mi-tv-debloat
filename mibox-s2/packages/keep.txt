@@ -1,0 +1,82 @@
+# =============================================================================
+# СТОП-ЛИСТ ПРИСТАВКИ Xiaomi TV Box S 2 (пакеты, которые нельзя трогать)
+# =============================================================================
+# Этот файл читает 02-debloat.sh: если хоть один пакет отсюда попадёт
+# в debloat.txt, скрипт откажется отключать что-либо вообще.
+# Сверх этого файла в scripts/lib/common.sh зашит общий запрет на ядро
+# Android (is_core_pkg) — он действует, даже если этот файл испортить.
+#
+# Список собран 2026-10-25 по внешним источникам и ещё НЕ сверен с живой
+# приставкой. После первого бэкапа (01) сюда добавится раздел «найдено на
+# приставке», как у телевизора. Лишнее имя в стоп-листе ничего не ломает,
+# поэтому сюда можно класть с запасом.
+# =============================================================================
+
+
+# ---- Ядро Android ---------------------------------------------------------
+android
+com.android.systemui
+com.android.shell
+com.android.settings
+com.android.tv.settings                   # Настройки + аварийный домашний экран FallbackHome
+com.android.providers.settings
+com.android.providers.media
+com.android.providers.downloads
+com.android.providers.tv
+com.android.inputdevices
+com.android.keychain
+com.android.location.fused
+com.android.packageinstaller
+com.google.android.packageinstaller
+com.android.permissioncontroller
+com.google.android.permissioncontroller   # «окирпичил» Mi TV Stick (CleanYourTV #884)
+com.google.android.modulemetadata
+com.google.android.ext.services
+com.google.android.ext.shared
+com.android.bluetooth                     # через Bluetooth работает пульт
+com.android.externalstorage               # флешки
+com.android.se
+
+
+# ---- Google ---------------------------------------------------------------
+# Без них не работают Google Play, аккаунт и большинство приложений.
+com.google.android.gms
+com.google.android.gsf
+com.android.vending                       # Google Play
+com.google.android.webview
+com.google.android.tts
+com.google.android.backuptransport
+com.google.android.syncadapters.contacts
+com.google.android.tv.frameworkpackagestubs
+
+
+# ---- Google TV --------------------------------------------------------------
+# Мастер первой настройки. На этой модели ему принадлежит сохранённая сеть
+# Wi-Fi, а его RecoveryActivity числится домашним экраном. Отключить его
+# хотят ради нового лаунчера (см. CLAUDE.md подпроекта, «Открытые решения») —
+# это решение владельца, пока не принято. До решения — здесь.
+com.google.android.tungsten.setupwraith
+# Пульт: сопряжение Bluetooth-пульта «Xiaomi RC» держит именно эта служба
+# (CleanYourTV, examples/xiaomi-mi-box-s-android12). Отключишь — пульт
+# может перестать подключаться, а без пульта приставкой не управлять.
+com.google.android.tv.remote.service
+com.google.android.tv.remote
+com.google.android.marvin.talkback
+# Chromecast и YouTube — как в стоп-листе телевизора. Убрать их отсюда и
+# отключить можно только решением владельца: это главные функции приставки.
+com.google.android.apps.mediashell        # Chromecast: трансляция с телефона
+com.google.android.youtube.tv
+
+
+# ---- Клавиатура -----------------------------------------------------------
+com.google.android.inputmethod.latin
+com.android.inputmethod.latin
+
+
+# ---- Xiaomi и чип Amlogic (по CleanYourTV, не проверено) -------------------
+# CleanYourTV на этой модели сознательно оставил их включёнными как системные.
+# Точные имена пакетов com.droidlogic.* (система чипа Amlogic) допишем после
+# бэкапа: шаблоны этот файл не понимает, нужны полные имена.
+mitv.service                              # системная служба Xiaomi
+com.mi.bluetooth                          # Bluetooth Xiaomi (пульт)
+com.xiaomi.gtv.settings                   # настройки Xiaomi внутри Google TV
