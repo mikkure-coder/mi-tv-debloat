@@ -1,7 +1,8 @@
 # glass-mitv — тема лаунчера CleanYourTV для нашего Mi TV 4S
 
 Основа — тема `themes/glass` из https://github.com/Gathin23/cleanyourtv
-(коммит `204143007f0b`, лицензия MIT, © 2026 Gathin): тёмно-синий фон,
+(коммит `204143007f0b`, лицензия MIT, © 2026 Gathin — текст лицензии
+в `LICENSE-cleanyourtv` рядом): тёмно-синий фон,
 «верхняя полка» с названием приложения, стеклянная панель — ближе всего к
 Apple TV. `wallpaper.jpg` взят оттуда без изменений.
 
