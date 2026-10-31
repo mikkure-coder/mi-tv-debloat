@@ -1,8 +1,8 @@
 # «Витрина» — свой лаунчер проекта
 
 Светлый домашний экран в стиле Apple TV: часы и дата, большая карточка
-погоды, ряд приложений на матовой панели, а ниже — ярлыки и курсы. Работает на приставке Xiaomi TV Box S 2
-(Android 14) и рассчитан на Mi TV 4S (Android 9), на ТВ ещё не проверялся.
+погоды, ряд приложений на матовой панели, а ниже — ярлыки и курсы. Работает и на приставке Xiaomi TV Box S 2
+(Android 14), и на телевизоре Mi TV 4S (Android 9) — проверено на обоих.
 
 ## Что на экране
 
@@ -47,8 +47,10 @@ Open-Meteo из домашней сети приставки недоступе�
 echo "sdk.dir=$HOME/Android/Sdk" > launcher/local.properties
 (cd launcher && ./gradlew assembleRelease)
 
-./mibox-s2/scripts/08-vitrina.sh              # поставить и передать настройки
+./mibox-s2/scripts/08-vitrina.sh              # приставка: поставить и передать настройки
 SET_HOME=1 ./mibox-s2/scripts/08-vitrina.sh   # и сделать домашним экраном
+./scripts/08-vitrina.sh                       # телевизор — то же самое
+SET_HOME=1 ./scripts/08-vitrina.sh
 ```
 
 Зависимостей у приложения нет: весь код — в `app/src/main/java`,
