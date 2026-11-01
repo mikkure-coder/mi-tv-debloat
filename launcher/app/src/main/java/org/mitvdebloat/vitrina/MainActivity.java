@@ -283,7 +283,11 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         p.setClipToPadding(false);
         p.setAlpha(0f);
 
+        // Группы друг под другом: на ТВ входов и ярлыков в один ряд не влезает
+        // (6 входов + 4 ярлыка ≈ 1330 dp при ширине экрана 960 dp) — «Ярлыки»
+        // уезжали за правый край. На приставке входов нет, вид прежний.
         LinearLayout groups = new LinearLayout(this);
+        groups.setOrientation(LinearLayout.VERTICAL);
         groups.setClipChildren(false);
         groups.setClipToPadding(false);
         List<TvInputInfo> ins = inputs();
@@ -313,7 +317,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         bt.setOnClickListener(v -> openAccessories());
         addPill(r, bt);
         LinearLayout.LayoutParams gl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        if (groups.getChildCount() > 0) gl.leftMargin = dp(28);
+        if (groups.getChildCount() > 0) gl.topMargin = dp(12);
         groups.addView(g, gl);
         p.addView(groups);
 
@@ -576,9 +580,15 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         try {
             // Только настоящие входы: HDMI и т.п. (passthrough) и эфирный тюнер от системного
             // приложения. Службы предпросмотра VLC и VK тоже числятся «тюнерами» — их не берём.
+            // На Mi TV 4S система отдаёт эфирный тюнер дважды — одинаковые тип
+            // и название показываем один раз.
             for (TvInputInfo i : m.getTvInputList()) {
                 boolean system = (i.getServiceInfo().applicationInfo.flags & android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0;
-                if (i.isPassthroughInput() || (i.getType() == TvInputInfo.TYPE_TUNER && system)) out.add(i);
+                if (!i.isPassthroughInput() && !(i.getType() == TvInputInfo.TYPE_TUNER && system)) continue;
+                String key = i.getType() + "|" + i.loadLabel(this);
+                boolean dup = false;
+                for (TvInputInfo o : out) if (key.equals(o.getType() + "|" + o.loadLabel(this))) { dup = true; break; }
+                if (!dup) out.add(i);
             }
         } catch (Exception ignored) { }
         return out;
