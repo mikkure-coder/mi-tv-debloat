@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Витрина</string>
+    <string name="power_service_desc">Открывает системный диалог выключения и перезагрузки для кнопки «Питание». Ничего с экрана не читает.</string>
 </resources>

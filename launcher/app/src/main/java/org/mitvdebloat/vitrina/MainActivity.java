@@ -316,6 +316,17 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         LinearLayout bt = Bits.pill(this, getDrawable(R.drawable.ic_bluetooth), "Аксессуары", dp(140), dp(78));
         bt.setOnClickListener(v -> openAccessories());
         addPill(r, bt);
+        // «Питание» — системный диалог выключения/перезагрузки. Открыть его
+        // может только служба специальных возможностей (см. PowerService);
+        // не включена — ведём в её настройки.
+        LinearLayout pwr = Bits.pill(this, getDrawable(R.drawable.ic_power), "Питание", dp(140), dp(78));
+        pwr.setOnClickListener(v -> {
+            if (!PowerService.powerDialog()) {
+                toast("Включи службу: Специальные возможности → Витрина");
+                open(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+            }
+        });
+        addPill(r, pwr);
         LinearLayout.LayoutParams gl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         if (groups.getChildCount() > 0) gl.topMargin = dp(12);
         groups.addView(g, gl);

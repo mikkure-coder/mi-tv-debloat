@@ -14,7 +14,9 @@
 #      состояния из backup/components-before.txt.
 #   1⅞. Возвращает системные настройки, изменённые 06-settings.sh:
 #      значения из backup/settings-before.txt.
-#   2. (Опционально) удаляет новый лаунчер с ТВ (FLauncher / CleanYourTV).
+#   2. (Опционально) удаляет новый лаунчер с ТВ (FLauncher / CleanYourTV /
+#      «Витрина») и снимает службу питания «Витрины» из специальных
+#      возможностей.
 #   2½. Убирает тему лаунчера CleanYourTV (07-theme.sh --reset), если он остаётся.
 #   3. Возвращает домашний экран, записанный в бэкапе (home-activity.txt).
 #
@@ -220,6 +222,20 @@ if [[ "$REMOVE_LAUNCHER" == "1" ]]; then
             err "Не удалось удалить $L_PKG: $out"
         fi
     done
+
+    # Службу питания «Витрины» снимаем из специальных возможностей: строка в
+    # secure-настройке переживает удаление приложения и мозолила бы глаза.
+    VSVC="org.mitvdebloat.vitrina/org.mitvdebloat.vitrina.PowerService"
+    if [[ "$DRY_RUN" == "1" ]]; then
+        log "DRY: убрать $VSVC из enabled_accessibility_services"
+    else
+        CUR_SVCS="$(adb_shell settings get secure enabled_accessibility_services | tr -d '\r')"
+        NEW_SVCS="$(echo "$CUR_SVCS" | tr ':' '\n' | grep -vxF "$VSVC" | paste -sd: -)"
+        if [[ "$NEW_SVCS" != "$CUR_SVCS" ]]; then
+            adb_shell settings put secure enabled_accessibility_services "$NEW_SVCS" >/dev/null
+            log "Служба питания снята из специальных возможностей."
+        fi
+    fi
 fi
 
 # --- Шаг 2½. Убираем тему лаунчера CleanYourTV (то, что делал 07) ---------

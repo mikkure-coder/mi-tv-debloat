@@ -68,5 +68,20 @@
                 <action android:name="org.mitvdebloat.vitrina.CONFIG" />
             </intent-filter>
         </receiver>
+
+        <!-- Служба для кнопки «Питание»: только глобальное действие
+             «диалог питания», ничего с экрана не читает (см. PowerService). -->
+        <service
+            android:name=".PowerService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/power_service" />
+        </service>
     </application>
 </manifest>

@@ -14,7 +14,9 @@
 #        vitrina.json — {"dock": [...], "city": "Москва", "lat": 55.75, "lon": 37.62}
 #                       (пример — launcher/vitrina.example.json).
 #      Выдаёт право «Устройства поблизости» (BLUETOOTH_CONNECT) для ярлыка
-#      «Аксессуары» — решение владельца 2026-10-25.
+#      «Аксессуары» — решение владельца 2026-10-25. Включает службу
+#      специальных возможностей лаунчера — для кнопки «Питание» (системный
+#      диалог выключения/перезагрузки) — решение владельца 2026-11-04.
 #   3. Только с SET_HOME=1 — делает «Витрину» домашним экраном и проверяет
 #      нажатием Home, что открылась она. Прежний лаунчер остаётся установленным.
 #
@@ -38,6 +40,10 @@ fi
 
 PKG="org.mitvdebloat.vitrina"
 HOME_ACT="$PKG/.MainActivity"
+# Служба специальных возможностей лаунчера — для кнопки «Питание» в ярлыках
+# (открывает системный диалог выключения/перезагрузки; решение владельца
+# 2026-11-04). Снимает её 99-restore.sh при REMOVE_LAUNCHER=1.
+SVC="$PKG/$PKG.PowerService"
 APK="$ROOT_DIR/launcher/app/build/outputs/apk/release/app-release.apk"
 CFG="$DEVICE_DIR/vitrina.json"
 DRY_RUN="${DRY_RUN:-0}"
@@ -71,6 +77,7 @@ ensure_adb_connected
 if [[ "$DRY_RUN" == "1" ]]; then
     warn "DRY_RUN=1 — только печатаю команды, НИЧЕГО не меняю."
     log "DRY: adb install -r $APK"
+    log "DRY: settings put secure enabled_accessibility_services …:$SVC (если её там ещё нет)"
     log "DRY: am broadcast -n $PKG/.ConfigReceiver -a $PKG.CONFIG --es b64 <настройки>"
     [[ "$SET_HOME" == "1" ]] && log "DRY: cmd package set-home-activity $HOME_ACT и проверка кнопкой Home"
     exit 0
@@ -92,6 +99,26 @@ if (( $(adb_shell getprop ro.build.version.sdk | tr -d '\r') >= 31 )); then
         warn "Право «Устройства поблизости» не выдалось — лаунчер попросит его сам при первом нажатии «Аксессуары»."
     fi
 fi
+
+# Службу питания включаем за пользователя: руками это пять экранов настроек.
+# Список служб хранится строкой «служба:служба:…» — добавляем свою, не трогая
+# чужие; если она уже там — ничего не делаем (скрипт можно гонять повторно).
+CUR_SVCS="$(adb_shell settings get secure enabled_accessibility_services | tr -d '\r')"
+case ":$CUR_SVCS:" in
+    *":$SVC:"*)
+        log "Служба питания уже включена."
+        ;;
+    *)
+        if [[ -z "$CUR_SVCS" || "$CUR_SVCS" == "null" ]]; then
+            NEW_SVCS="$SVC"
+        else
+            NEW_SVCS="$CUR_SVCS:$SVC"
+        fi
+        adb_shell settings put secure enabled_accessibility_services "$NEW_SVCS" >/dev/null
+        adb_shell settings put secure accessibility_enabled 1 >/dev/null
+        log "Служба питания включена (Настройки → Специальные возможности → Витрина)."
+        ;;
+esac
 
 # Приёмник настроек закрыт правом DUMP: слать их может только adb shell.
 res="$(adb_shell am broadcast -n "$PKG/.ConfigReceiver" -a "$PKG.CONFIG" --es b64 "$B64" | tr -d '\r' | grep -o 'data="[^"]*"' || true)"
